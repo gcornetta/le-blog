@@ -7,7 +7,7 @@ const blogCollection = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     excerpt: z.string().max(160),
-    tags: z.array(z.string()).default([]),
+    tags: z.array(z.string().min(1).max(20)).default([]),
     featured: z.boolean().default(false),
     heroImage: z.string().optional(), // path to image in public/
     author: z.string().default('Default Author'),

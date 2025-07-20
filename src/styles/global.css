@@ -1,28 +1,50 @@
-@import "tailwindcss";
-
-/* src/styles/global.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Custom “fade-in” animation for posts */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+/* Hero background gradient override */
+.hero-bg {
+  background: linear-gradient(135deg, var(--tw-gradient-stops));
+}
+
+/* Optional: tweak DaisyUI card default to add smoother shadows */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+
 /* Custom prose styles for markdown content */
 .prose {
-  --tw-prose-body: theme('colors.base-content');
-  --tw-prose-headings: theme('colors.base-content');
-  --tw-prose-lead: theme('colors.base-content');
-  --tw-prose-links: theme('colors.primary');
-  --tw-prose-bold: theme('colors.base-content');
-  --tw-prose-counters: theme('colors.base-content');
-  --tw-prose-bullets: theme('colors.base-content');
-  --tw-prose-hr: theme('colors.base-300');
-  --tw-prose-quotes: theme('colors.base-content');
-  --tw-prose-quote-borders: theme('colors.base-300');
-  --tw-prose-captions: theme('colors.base-content');
-  --tw-prose-code: theme('colors.base-content');
-  --tw-prose-pre-code: theme('colors.base-100');
-  --tw-prose-pre-bg: theme('colors.base-300');
-  --tw-prose-th-borders: theme('colors.base-300');
-  --tw-prose-td-borders: theme('colors.base-200');
+  --tw-prose-body: hsl(var(--bc));
+  --tw-prose-headings: hsl(var(--bc));
+  --tw-prose-links: hsl(var(--p));
+  --tw-prose-bold: hsl(var(--bc));
+  --tw-prose-bullets: hsl(var(--bc));
+  --tw-prose-hr: hsl(var(--bc) / 0.2);
+  --tw-prose-quotes: hsl(var(--bc));
+  --tw-prose-code: hsl(var(--bc));
+  --tw-prose-pre-code: hsl(var(--b1));
+  --tw-prose-pre-bg: hsl(var(--b3));
 }
 
 /* View transitions */

@@ -1,57 +1,81 @@
 ---
 // src/components/content/BlogCard.astro
 import { Image } from 'astro:assets';
-import type { CollectionEntry } from 'astro:content';
 
 interface Props {
   post: CollectionEntry<'blog'>;
   featured?: boolean;
-  class?: string;
 }
 
-const { post, featured = false, class: className } = Astro.props;
-const { title, excerpt, date, tags, featuredImage } = post.data;
+const { post, featured = false } = Astro.props;
+const { title, excerpt, tags, heroImage } = post.data;
+
+// Date handling with fallback
+const pubDate = post.data.pubDate ? new Date(post.data.pubDate) : new Date();
+const formattedDate = pubDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric'
+});
 ---
 
-<article class={`flex flex-col overflow-hidden rounded-box shadow-lg hover:shadow-xl transition-shadow duration-300 ${className}`}>
-  {featuredImage && (
-    <a href={`/blog/${post.slug}`} class="block aspect-video overflow-hidden">
-      <img
-        src={featuredImage}
+<article class="group relative flex flex-col h-full bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+  {/* Image Container */}
+  {heroImage && (
+    <div class="relative aspect-video overflow-hidden">
+      <Image
+        src={heroImage}
         alt={title}
         width={800}
         height={450}
-        class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading={featured ? 'eager' : 'lazy'}
       />
-    </a>
-  )}
-  
-  <div class="flex-1 p-6 bg-base-100">
-    <div class="flex flex-wrap gap-2 mb-3">
-      {tags.map(tag => (
-        <span class="badge badge-outline text-xs">{tag}</span>
-      ))}
+      <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
     </div>
-    
-    <h2 class="text-xl font-bold mb-2 hover:text-primary transition-colors">
-      <a href={`/blog/${post.slug}`}>{title}</a>
-    </h2>
-    
-    <p class="text-sm opacity-75 mb-4">{excerpt}</p>
-    
-    <div class="flex items-center justify-between mt-auto pt-4 border-t border-base-200">
+  )}
+
+  {/* Content Container */}
+  <div class="flex flex-col flex-grow p-6">
+    {/* Tags */}
+    {tags?.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-3">
+        {tags.slice(0, 3).map(tag => (
+          <span class="badge badge-primary badge-outline hover:badge-primary transition-colors text-xs font-medium">
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+
+    {/* Title */}
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+      <a href={`/blog/${post.slug}`} class="hover:text-primary transition-colors">
+        {title}
+      </a>
+    </h3>
+
+    {/* Excerpt */}
+    <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3 flex-grow">
+      {excerpt}
+    </p>
+
+    {/* Footer */}
+    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
       <time 
-        datetime={date.toISOString()}
-        class="text-xs opacity-70"
+        datetime={pubDate.toISOString()}
+        class="text-sm text-gray-500 dark:text-gray-400"
       >
-        {date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        {formattedDate}
       </time>
       <a 
         href={`/blog/${post.slug}`} 
-        class="btn btn-sm btn-ghost"
+        class="btn btn-sm btn-ghost text-primary hover:text-primary-focus"
       >
-        Read more →
+        Read More
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
       </a>
     </div>
   </div>

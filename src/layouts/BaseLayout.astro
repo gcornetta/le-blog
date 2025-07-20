@@ -4,6 +4,7 @@ import type { Props } from 'astro';
 import AlpineInit from '../components/ui/AlpineInit.astro';
 import Header from '../components/content/Header.astro';
 import Footer from '../components/content/Footer.astro';
+import '../styles/global.css';
 
 // Define props
 interface LayoutProps extends Props {
@@ -37,7 +38,7 @@ const { title = 'My Teaching Blog', description = 'Educational resources and ins
   <meta property="og:url" content={Astro.url.href} />
   
   <!-- Tailwind CSS -->
-  <link rel="stylesheet" href="/styles/global.css" />
+ <!--link rel="stylesheet" href="/styles/global.css" /-->
   
   <!-- Alpine.js Script (deferred) -->
   <script defer src="//unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>

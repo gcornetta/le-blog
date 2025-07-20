@@ -1,28 +1,13 @@
-import { defineConfig } from 'astro/config';
-import tailwind from '@tailwindcss/vite';
-import alpinejs from '@astrojs/alpinejs';
-import cloudflare from '@astrojs/cloudflare';
-import daisyui from 'daisyui'; 
+import { defineConfig } from "astro/config";
+import tailwind from "@astrojs/tailwind";
+import alpinejs from "@astrojs/alpinejs";
+import cloudflare from "@astrojs/cloudflare";
 
 export default defineConfig({
-  vite: {
-    plugins: [
-      tailwind({
-        config: {
-          content: [
-            './src/**/*.astro',
-            './src/**/*.js',
-            './src/**/*.md'
-          ],
-          plugins: [daisyui], // Use imported module
-          daisyui: {
-            themes: ['light', 'dark'],
-            logs: false
-          }
-        }
-      })
-    ]
-  },
-  integrations: [alpinejs()],
-  adapter: cloudflare()
+  integrations: [
+    tailwind(),  // Only use @astrojs/tailwind
+    alpinejs(),
+  ],
+  adapter: cloudflare(),
+  // Remove ALL vite configuration
 });
