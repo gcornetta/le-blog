@@ -1,8 +1,14 @@
 module.exports = {
   content: [
-    './src/**/*.{astro,js,md}'
+    './src/**/*.{astro,html,js,md}'
   ],
-  plugins: [require('daisyui')],
+  theme: {
+    extend: {},
+  },
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('daisyui')
+  ],
   daisyui: {
     themes: ['light', 'dark']
   }

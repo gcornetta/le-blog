@@ -1,0 +1,99 @@
+---
+// src/pages/blog/index.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import BlogCard from '../../components/content/BlogCard.astro';
+
+// Get all blog posts, sorted by date (newest first)
+const allPosts = (await getCollection('blog'))
+  .filter(post => !post.data.draft) // Exclude drafts
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// Optional: Pagination variables
+const pageSize = 9;
+const currentPage = Astro.url.searchParams.get('page') || 1;
+const totalPages = Math.ceil(allPosts.length / pageSize);
+const paginatedPosts = allPosts.slice(
+  (currentPage - 1) * pageSize,
+  currentPage * pageSize
+);
+---
+
+<BaseLayout title="Blog | My Teaching Resources" description="Explore our latest articles and teaching resources">
+  <main class="container mx-auto px-4 py-8">
+    <header class="mb-12 text-center">
+      <h1 class="text-4xl font-bold mb-4">Teaching Blog</h1>
+      <p class="text-lg opacity-80 max-w-2xl mx-auto">
+        Insights, tutorials, and resources for modern educators
+      </p>
+    </header>
+
+    <!-- Featured Posts (show first 2 featured articles) -->
+    <section class="mb-16" x-data="{ activeSlide: 0 }">
+      <h2 class="text-2xl font-semibold mb-6">Featured Articles</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {
+          allPosts
+            .filter(post => post.data.featured)
+            .slice(0, 2)
+            .map(post => (
+              <BlogCard 
+                post={post} 
+                featured={true} 
+                class="h-full"
+              />
+            ))
+        }
+      </div>
+    </section>
+
+    <!-- All Posts Grid -->
+    <section>
+      <h2 class="text-2xl font-semibold mb-6">Latest Articles</h2>
+      
+      {paginatedPosts.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedPosts.map(post => (
+            <BlogCard post={post} />
+          ))}
+        </div>
+      ) : (
+        <p class="text-center py-12">No articles found. Check back later!</p>
+      )}
+
+      <!-- Pagination -->
+      {totalPages > 1 && (
+        <div class="flex justify-center mt-12">
+          <div class="join">
+            <a 
+              href={`?page=${currentPage - 1}`} 
+              class="join-item btn" 
+              aria-label="Previous page"
+              disabled={currentPage <= 1}
+            >
+              «
+            </a>
+            {
+              Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <a
+                  href={`?page=${page}`}
+                  class={`join-item btn ${currentPage == page ? 'btn-active' : ''}`}
+                >
+                  {page}
+                </a>
+              ))
+            }
+            <a 
+              href={`?page=${currentPage + 1}`} 
+              class="join-item btn"
+              aria-label="Next page"
+              disabled={currentPage >= totalPages}
+            >
+              »
+            </a>
+          </div>
+        </div>
+      )}
+    </section>
+  </main>
+</BaseLayout>

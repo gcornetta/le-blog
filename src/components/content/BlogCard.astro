@@ -1,0 +1,58 @@
+---
+// src/components/content/BlogCard.astro
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  featured?: boolean;
+  class?: string;
+}
+
+const { post, featured = false, class: className } = Astro.props;
+const { title, excerpt, date, tags, featuredImage } = post.data;
+---
+
+<article class={`flex flex-col overflow-hidden rounded-box shadow-lg hover:shadow-xl transition-shadow duration-300 ${className}`}>
+  {featuredImage && (
+    <a href={`/blog/${post.slug}`} class="block aspect-video overflow-hidden">
+      <img
+        src={featuredImage}
+        alt={title}
+        width={800}
+        height={450}
+        class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+        loading={featured ? 'eager' : 'lazy'}
+      />
+    </a>
+  )}
+  
+  <div class="flex-1 p-6 bg-base-100">
+    <div class="flex flex-wrap gap-2 mb-3">
+      {tags.map(tag => (
+        <span class="badge badge-outline text-xs">{tag}</span>
+      ))}
+    </div>
+    
+    <h2 class="text-xl font-bold mb-2 hover:text-primary transition-colors">
+      <a href={`/blog/${post.slug}`}>{title}</a>
+    </h2>
+    
+    <p class="text-sm opacity-75 mb-4">{excerpt}</p>
+    
+    <div class="flex items-center justify-between mt-auto pt-4 border-t border-base-200">
+      <time 
+        datetime={date.toISOString()}
+        class="text-xs opacity-70"
+      >
+        {date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </time>
+      <a 
+        href={`/blog/${post.slug}`} 
+        class="btn btn-sm btn-ghost"
+      >
+        Read more →
+      </a>
+    </div>
+  </div>
+</article>

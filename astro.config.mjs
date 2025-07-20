@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@tailwindcss/vite';
 import alpinejs from '@astrojs/alpinejs';
 import cloudflare from '@astrojs/cloudflare';
-import daisyui from 'daisyui'; // Import as ES module
+import daisyui from 'daisyui'; 
 
 export default defineConfig({
   vite: {

@@ -1,0 +1,73 @@
+---
+// src/layouts/BaseLayout.astro
+import type { Props } from 'astro';
+import AlpineInit from '../components/ui/AlpineInit.astro';
+import Header from '../components/content/Header.astro';
+import Footer from '../components/content/Footer.astro';
+
+// Define props
+interface LayoutProps extends Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+}
+
+const { title = 'My Teaching Blog', description = 'Educational resources and insights', canonical } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  
+  <title>{title}</title>
+  
+  <!-- Canonical URL -->
+  {canonical && <link rel="canonical" href={canonical} />}
+  
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  
+  <!-- Open Graph / Social Meta -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={Astro.url.href} />
+  
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="/styles/global.css" />
+  
+  <!-- Alpine.js Script (deferred) -->
+  <script defer src="//unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body class="min-h-screen flex flex-col bg-base-100 text-base-content" 
+      x-data="{ mobileMenuOpen: false, darkMode: $persist(false) }"
+      :class="{ 'dark': darkMode }">
+  <AlpineInit />
+  
+  <!-- Header Navigation -->
+  <Header />
+  
+  <!-- Main Content -->
+  <main class="flex-grow">
+    <slot />
+  </main>
+  
+  <!-- Footer -->
+  <Footer />
+  
+  <!-- Back to Top Button -->
+  <button 
+    class="fixed bottom-6 right-6 btn btn-circle btn-primary shadow-lg z-50"
+    @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+    aria-label="Back to top"
+    x-show="window.scrollY > 300"
+    x-transition
+  >
+    ↑
+  </button>
+</body>
+</html>

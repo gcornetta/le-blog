@@ -1,0 +1,62 @@
+---
+// src/components/content/Header.astro
+---
+
+<header class="bg-base-200 shadow-sm">
+  <div class="container mx-auto px-4">
+    <nav class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="/" class="flex items-center space-x-2">
+        <img src="/assets/images/logo.svg" alt="Logo" class="h-8" />
+        <span class="text-xl font-bold">TeachBlog</span>
+      </a>
+      
+      <!-- Desktop Navigation -->
+      <div class="hidden md:flex items-center space-x-8">
+        <a href="/" class="hover:text-primary">Home</a>
+        <a href="/blog" class="hover:text-primary font-medium">Blog</a>
+        <a href="/courses" class="hover:text-primary">Courses</a>
+        <a href="/about" class="hover:text-primary">About</a>
+        
+        <!-- Theme Toggle -->
+        <button @click="$store.ui.toggleTheme" class="p-2 rounded-full hover:bg-base-300">
+          <span x-show="!darkMode">🌞</span>
+          <span x-show="darkMode" x-cloak>🌙</span>
+        </button>
+      </div>
+      
+      <!-- Mobile Menu Button -->
+      <button 
+        class="md:hidden p-2 rounded-md hover:bg-base-300"
+        @click="$store.ui.toggleMobileMenu"
+        aria-label="Toggle menu"
+      >
+        <span x-show="!$store.ui.isMobileMenuOpen">☰</span>
+        <span x-show="$store.ui.isMobileMenuOpen" x-cloak>✕</span>
+      </button>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div 
+      class="md:hidden fixed inset-0 bg-base-100 z-50 pt-16 px-4"
+      x-show="$store.ui.isMobileMenuOpen"
+      x-transition
+      x-cloak
+    >
+      <div class="flex flex-col space-y-4 py-4">
+        <a href="/" class="py-2 border-b border-base-200">Home</a>
+        <a href="/blog" class="py-2 border-b border-base-200">Blog</a>
+        <a href="/courses" class="py-2 border-b border-base-200">Courses</a>
+        <a href="/about" class="py-2 border-b border-base-200">About</a>
+        
+        <div class="pt-4 flex justify-between items-center">
+          <span>Theme:</span>
+          <button @click="$store.ui.toggleTheme" class="p-2 rounded-full hover:bg-base-200">
+            <span x-show="!darkMode">🌞 Light</span>
+            <span x-show="darkMode" x-cloak>🌙 Dark</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

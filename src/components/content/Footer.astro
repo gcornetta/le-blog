@@ -1,0 +1,49 @@
+---
+// src/components/content/Footer.astro
+---
+
+<footer class="bg-base-200 mt-12">
+  <div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- About Section -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">About TeachBlog</h3>
+        <p class="text-sm">
+          Sharing educational resources and teaching insights to help educators
+          in the digital age.
+        </p>
+      </div>
+      
+      <!-- Quick Links -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+        <ul class="space-y-2">
+          <li><a href="/blog" class="hover:text-primary">Blog</a></li>
+          <li><a href="/courses" class="hover:text-primary">Courses</a></li>
+          <li><a href="/privacy" class="hover:text-primary">Privacy Policy</a></li>
+          <li><a href="/terms" class="hover:text-primary">Terms of Service</a></li>
+        </ul>
+      </div>
+      
+      <!-- Newsletter -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
+        <form class="space-y-2" @submit.prevent="alert('Thanks for subscribing!')">
+          <input 
+            type="email" 
+            placeholder="Your email" 
+            class="input input-bordered w-full" 
+            required
+          />
+          <button type="submit" class="btn btn-primary w-full">
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </div>
+    
+    <div class="border-t border-base-300 mt-8 pt-6 text-center text-sm">
+      <p>© 2025 TeachBlog. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

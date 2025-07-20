@@ -1,0 +1,23 @@
+---
+// src/components/ui/AlpineInit.astro
+---
+
+<script is:inline>
+  document.addEventListener('alpine:init', () => {
+    // Global Alpine stores or plugins can be registered here
+    Alpine.store('ui', {
+      // Shared UI state
+      isMobileMenuOpen: false,
+      theme: 'light',
+      
+      toggleMobileMenu() {
+        this.isMobileMenuOpen = !this.isMobileMenuOpen;
+      },
+      
+      toggleTheme() {
+        this.theme = this.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.classList.toggle('dark', this.theme === 'dark');
+      }
+    });
+  });
+</script>
