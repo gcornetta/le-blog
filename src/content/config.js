@@ -1,20 +1,19 @@
+// src/content/config.js
 import { z, defineCollection } from 'astro:content';
+import readingTime from 'reading-time';
 
-const blogCollection = defineCollection({
-  schema: z.object({
+const blog = defineCollection({
+  schema: ({ image }) => z.object({
     title: z.string(),
     description: z.string().optional(),
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
-    excerpt: z.string().max(160),
     tags: z.array(z.string().min(1).max(20)).default([]),
     featured: z.boolean().default(false),
-    heroImage: z.string().optional(), // path to image in public/
+    heroImage: image().optional(),
     author: z.string().default('Default Author'),
-    draft: z.boolean().default(false)
-  })
+    draft: z.boolean().default(false),
+  }),
 });
 
-export const collections = {
-  'blog': blogCollection
-};
+export const collections = { blog };

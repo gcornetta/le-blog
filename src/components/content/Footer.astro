@@ -1,13 +1,14 @@
 ---
 // src/components/content/Footer.astro
+const year = new Date().getFullYear();
 ---
 
-<footer class="bg-base-200 mt-12">
+<footer class="bg-gradient-to-br from-base-200 to-base-300 dark:from-base-800 dark:to-base-900 mt-12">
   <div class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- About Section -->
       <div>
-        <h3 class="text-lg font-semibold mb-4">About TeachBlog</h3>
+        <h3 class="text-lg font-semibold mb-4">About LearnElectronics</h3>
         <p class="text-sm">
           Sharing educational resources and teaching insights to help educators
           in the digital age.
@@ -28,22 +29,22 @@
       <!-- Newsletter -->
       <div>
         <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
-        <form class="space-y-2" @submit.prevent="alert('Thanks for subscribing!')">
-          <input 
-            type="email" 
-            placeholder="Your email" 
-            class="input input-bordered w-full" 
-            required
-          />
-          <button type="submit" class="btn btn-primary w-full">
-            Subscribe
-          </button>
-        </form>
+          <form class="space-y-2" @submit.prevent="$store.alert.show('Thanks for subscribing!')">
+            <input 
+              type="email" 
+              placeholder="Your email" 
+              class="input input-bordered w-full" 
+              required
+            />
+            <button type="submit" class="btn btn-primary w-full">
+              Subscribe
+            </button>
+          </form>
       </div>
     </div>
     
     <div class="border-t border-base-300 mt-8 pt-6 text-center text-sm">
-      <p>© 2025 TeachBlog. All rights reserved.</p>
+      <p>© {year} Gianluca Cornetta. All rights reserved.</p>
     </div>
   </div>
 </footer>

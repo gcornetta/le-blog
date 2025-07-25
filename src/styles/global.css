@@ -32,7 +32,6 @@
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
-
 /* Custom prose styles for markdown content */
 .prose {
   --tw-prose-body: hsl(var(--bc));
@@ -52,3 +51,4 @@
 ::view-transition-new(root) {
   animation-duration: 0.3s;
 }
+

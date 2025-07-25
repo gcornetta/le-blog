@@ -1,0 +1,46 @@
+---
+// A pure-Alpine theme switcher using localStorage
+---
+<div x-data="themeSwitcher()" x-init="init()" class="flex items-center">
+  <button
+    @click="toggle"
+    class="relative w-16 h-9 bg-base-200 border border-base-300 rounded-full flex items-center px-1 transition-colors duration-300 focus:outline-none"
+    :aria-label="`Toggle ${theme === 'light' ? 'dark' : 'light'} mode`"
+  >
+    <!-- Sliding thumb -->
+    <div
+      class="absolute top-0.5 left-0.5 w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center transition-all duration-300"
+      :class="theme === 'dark' ? 'translate-x-7' : 'translate-x-0'"
+    >
+      <!-- Moon icon -->
+      <svg x-show="theme === 'dark'" x-transition.opacity class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+        viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+      </svg>
+
+      <!-- Sun icon -->
+      <svg x-show="theme === 'light'" x-transition.opacity class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+        viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 3v1m0 16v1m9-9h1M3 12H2m15.364-6.364l.707.707M5.636 18.364l-.707.707m12.728 0l.707-.707M5.636 5.636l-.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z" />
+      </svg>
+    </div>
+  </button>
+</div>
+
+<script is:inline>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('themeSwitcher', () => ({
+      theme: localStorage.getItem('theme') || 'light',
+      init() {
+        document.documentElement.setAttribute('data-theme', this.theme);
+      },
+      toggle() {
+        this.theme = this.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', this.theme);
+        localStorage.setItem('theme', this.theme);
+      }
+    }));
+  });
+</script>

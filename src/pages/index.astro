@@ -1,0 +1,73 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BlogCard from '../components/content/BlogCard.astro';
+import ImageCarousel from '../components/content/ImageCarousel.astro';
+import UpButton from '../components/ui/UpButton.astro';
+import Alert from '../components/ui/Alert.astro';
+
+const posts = (await getCollection('blog', ({ data }) => (
+  import.meta.env.PROD ? !data.draft : true
+))).sort((a, b) => b.data.pubDate - a.data.pubDate);
+---
+
+<BaseLayout title="Home | My Teaching Resources" description="Welcome to my teaching blog">
+  <!-- Hero Section with Background Slider -->
+  <section class="relative h-[600px] mb-16 overflow-hidden">
+    <!-- Background Image Carousel -->
+    <div class="absolute inset-0 z-0">
+      <ImageCarousel autoplay={true} interval={5000} showProgress={false} />
+    </div>
+
+    <!-- Hero Content Overlay -->
+    <div class="relative z-10 bg-black/50 h-full flex items-center justify-center text-center px-4">
+      <div class="text-white">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4">Welcome to My Teaching Blog</h1>
+        <p class="text-lg sm:text-xl md:text-2xl max-w-2xl mx-auto mb-8 opacity-90">
+          Practical insights and resources for modern educators
+        </p>
+        <a href="/blog" class="btn btn-lg btn-primary hover:btn-secondary transition">
+          Read the Blog
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <main class="container mx-auto px-4 pb-16">
+    <!-- Featured Articles -->
+    {posts.filter(post => post.data.featured).length > 0 && (
+      <section class="mb-20">
+        <h2 class="text-4xl font-semibold mb-8">Featured Articles</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {posts
+            .filter(post => post.data.featured)
+            .slice(0, 2)
+            .map(post => (
+              <div class="fade-in-up">
+                <BlogCard post={post} featured />
+              </div>
+            ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Latest Articles Grid -->
+    {posts.length > 0 && (
+      <section>
+        <h2 class="text-4xl font-semibold mb-8">Latest Articles</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts
+            .sort((a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate))
+            .slice(0, posts.length >= 6 ? 6 : posts.length <= 3 ? posts.length : 3)
+            .map(post => (
+              <div class="fade-in-up">
+                <BlogCard post={post} />
+              </div>
+            ))}
+        </div>
+      </section>
+    )}
+  </main>
+<Alert />
+<UpButton />
+</BaseLayout>
