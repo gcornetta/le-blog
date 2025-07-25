@@ -27,8 +27,7 @@ const options = JSON.stringify({ autoplay, interval, showProgress, slides });
   x-init="start()"
   class="w-full relative overflow-hidden"
 >
-  <!-- Slides (pointer-events-none so arrows capture clicks) -->
-  <div class="relative w-full overflow-hidden h-[600px] pointer-events-none">
+  <div class="relative w-full overflow-hidden h-[600px]">
     <template x-for="(slide, index) in slides" :key="index">
       <div
         x-show="current === index"
@@ -44,7 +43,7 @@ const options = JSON.stringify({ autoplay, interval, showProgress, slides });
         <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
           <h2 x-text="slide.title" class="text-4xl font-bold mb-2 text-white drop-shadow-lg"></h2>
           <p x-text="slide.text" class="max-w-xl mb-4 text-white drop-shadow-lg"></p>
-          <a :href="slide.link" class="btn btn-primary btn-sm sm:btn-md w-fit">Learn More</a>
+          <a :href="slide.link" class="btn btn-primary btn-sm sm:btn-md w-fit relative z-40 pointer-events-auto">Learn More</a>
         </div>
         <template x-if="showProgress && current === index">
           <div
@@ -56,14 +55,12 @@ const options = JSON.stringify({ autoplay, interval, showProgress, slides });
     </template>
   </div>
 
-  <!-- Navigation Arrows -->
-  <div class="absolute inset-x-0 top-1/2 z-30 flex justify-between items-center px-6 -translate-y-1/2 pointer-events-auto">
+  <div class="absolute inset-x-0 top-1/2 z-40 flex justify-between items-center px-6 -translate-y-1/2 pointer-events-auto">
     <button @click="prev(); restart();" type="button" class="btn btn-circle btn-md sm:btn-lg text-xl">❮</button>
     <button @click="next(); restart();" type="button" class="btn btn-circle btn-md sm:btn-lg text-xl">❯</button>
   </div>
 
-  <!-- Thumbnails -->
-  <div class="mt-4 flex justify-center gap-2 sm:gap-4 flex-wrap pointer-events-auto">
+  <div class="mt-4 flex justify-center gap-2 sm:gap-4 flex-wrap pointer-events-auto relative z-40">
     <template x-for="(slide, index) in slides" :key="index">
       <button
         @click="goTo(index); restart();"
