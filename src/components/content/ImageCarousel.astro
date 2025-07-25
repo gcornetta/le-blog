@@ -1,179 +1,95 @@
 ---
 // src/components/content/ImageCarousel.astro
-import { Image } from 'astro:assets';
 import slide1 from '../../assets/images/slides/slide-1.tiff';
 import slide2 from '../../assets/images/slides/slide-2.tiff';
 import slide3 from '../../assets/images/slides/slide-3.tiff';
 import slide4 from '../../assets/images/slides/slide-4.tiff';
 
-const {
-  autoplay = true,
-  interval = 5000,
-  showProgress = true,
-} = Astro.props;
+// Props
+const autoplay = Astro.props.autoplay ?? true;
+const interval = Astro.props.interval ?? 5000;
+const showProgress = Astro.props.showProgress ?? true;
 
+// Slide data array
 const slides = [
-  {
-    image: slide1,
-    title: "First Slide",
-    text: "Description for the first slide.",
-    link: "#"
-  },
-  {
-    image: slide2,
-    title: "Second Slide",
-    text: "Description for the second slide.",
-    link: "#"
-  },
-  {
-    image: slide3,
-    title: "Third Slide",
-    text: "Description for the third slide.",
-    link: "#"
-  },
-  {
-    image: slide4,
-    title: "Fourth Slide",
-    text: "Description for the fourth slide.",
-    link: "#"
-  }
+  { src: slide1.src, title: 'First Slide', text: 'Description for the first slide.', link: '#' },
+  { src: slide2.src, title: 'Second Slide', text: 'Description for the second slide.', link: '#' },
+  { src: slide3.src, title: 'Third Slide', text: 'Description for the third slide.', link: '#' },
+  { src: slide4.src, title: 'Fourth Slide', text: 'Description for the fourth slide.', link: '#' },
 ];
+
+// Serialize options for Alpine
+const options = JSON.stringify({ autoplay, interval, showProgress, slides });
 ---
 
 <div
-  x-data="carouselAutoplay({ autoplay: true, interval: 5000, total: 4 })"
+  x-data={`carouselAutoplay(${options})`}
   x-init="start()"
   class="w-full relative overflow-hidden"
 >
-  <!-- Carousel Slides -->
-  <div class="relative w-full overflow-hidden h-[600px]">
-    <!-- Slide 0 -->
-    <div 
-      x-show="current === 0" 
-      x-transition:enter="transition ease-out duration-1000"
-      x-transition:enter-start="translate-x-full"
-      x-transition:enter-end="translate-x-0"
-      x-transition:leave="transition ease-in duration-1000"
-      x-transition:leave-start="translate-x-0"
-      x-transition:leave-end="-translate-x-full"
-      class="absolute inset-0"
-    >
-      <Image src={slide1} alt="Slide 1" width={1920} height={1080} class="w-full h-full object-cover" />
-      <!-- Added bg-black/5 (5% opacity) -->
-      <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
-        <h2 class="text-4xl font-bold mb-2 text-white drop-shadow-lg">First Slide</h2>
-        <p class="max-w-xl mb-4 text-white drop-shadow-lg">Description for the first slide.</p>
-        <a href="#" class="btn btn-primary btn-sm sm:btn-md w-fit">Learn More</a>
+  <!-- Slides (pointer-events-none so arrows capture clicks) -->
+  <div class="relative w-full overflow-hidden h-[600px] pointer-events-none">
+    <template x-for="(slide, index) in slides" :key="index">
+      <div
+        x-show="current === index"
+        x-transition:enter="transition ease-out duration-1000"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-1000"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="-translate-x-full"
+        class="absolute inset-0"
+      >
+        <img :src="slide.src" :alt="slide.title" class="w-full h-full object-cover" loading="lazy" />
+        <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
+          <h2 x-text="slide.title" class="text-4xl font-bold mb-2 text-white drop-shadow-lg"></h2>
+          <p x-text="slide.text" class="max-w-xl mb-4 text-white drop-shadow-lg"></p>
+          <a :href="slide.link" class="btn btn-primary btn-sm sm:btn-md w-fit">Learn More</a>
+        </div>
+        <template x-if="showProgress && current === index">
+          <div
+            class="absolute bottom-0 left-0 h-1 bg-primary"
+            :style="`width: ${progress}%; transition: width ${interval}ms linear;`"
+          ></div>
+        </template>
       </div>
-      <template x-if="showProgress && current === 0">
-        <div class="absolute bottom-0 left-0 h-1 bg-primary" :style="`width: ${progress}%; transition: width ${interval}ms linear;`"></div>
-      </template>
-    </div>
-
-    <!-- Slide 1 -->
-    <div 
-      x-show="current === 1" 
-      x-transition:enter="transition ease-out duration-1000"
-      x-transition:enter-start="translate-x-full"
-      x-transition:enter-end="translate-x-0"
-      x-transition:leave="transition ease-in duration-1000"
-      x-transition:leave-start="translate-x-0"
-      x-transition:leave-end="-translate-x-full"
-      class="absolute inset-0"
-    >
-      <Image src={slide2} alt="Slide 2" width={1920} height={1080} class="w-full h-full object-cover" />
-      <!-- Added bg-black/5 (5% opacity) -->
-      <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
-        <h2 class="text-4xl font-bold mb-2 text-white drop-shadow-lg">Second Slide</h2>
-        <p class="max-w-xl mb-4 text-white drop-shadow-lg">Description for the second slide.</p>
-        <a href="#" class="btn btn-primary btn-sm sm:btn-md w-fit">Learn More</a>
-      </div>
-      <template x-if="showProgress && current === 1">
-        <div class="absolute bottom-0 left-0 h-1 bg-primary" :style="`width: ${progress}%; transition: width ${interval}ms linear;`"></div>
-      </template>
-    </div>
-
-    <!-- Slide 2 -->
-    <div 
-      x-show="current === 2" 
-      x-transition:enter="transition ease-out duration-1000"
-      x-transition:enter-start="translate-x-full"
-      x-transition:enter-end="translate-x-0"
-      x-transition:leave="transition ease-in duration-1000"
-      x-transition:leave-start="translate-x-0"
-      x-transition:leave-end="-translate-x-full"
-      class="absolute inset-0"
-    >
-      <Image src={slide3} alt="Slide 3" width={1920} height={1080} class="w-full h-full object-cover" />
-      <!-- Added bg-black/5 (5% opacity) -->
-      <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
-        <h2 class="text-4xl font-bold mb-2 text-white drop-shadow-lg">Third Slide</h2>
-        <p class="max-w-xl mb-4 text-white drop-shadow-lg">Description for the third slide.</p>
-        <a href="#" class="btn btn-primary btn-sm sm:btn-md w-fit">Learn More</a>
-      </div>
-      <template x-if="showProgress && current === 2">
-        <div class="absolute bottom-0 left-0 h-1 bg-primary" :style="`width: ${progress}%; transition: width ${interval}ms linear;`"></div>
-      </template>
-    </div>
-
-    <!-- Slide 3 -->
-    <div 
-      x-show="current === 3" 
-      x-transition:enter="transition ease-out duration-1000"
-      x-transition:enter-start="translate-x-full"
-      x-transition:enter-end="translate-x-0"
-      x-transition:leave="transition ease-in duration-1000"
-      x-transition:leave-start="translate-x-0"
-      x-transition:leave-end="-translate-x-full"
-      class="absolute inset-0"
-    >
-      <Image src={slide4} alt="Slide 4" width={1920} height={1080} class="w-full h-full object-cover" />
-      <!-- Added bg-black/5 (5% opacity) -->
-      <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
-        <h2 class="text-4xl font-bold mb-2 text-white drop-shadow-lg">Fourth Slide</h2>
-        <p class="max-w-xl mb-4 text-white drop-shadow-lg">Description for the fourth slide.</p>
-        <a href="#" class="btn btn-primary btn-sm sm:btn-md w-fit">Learn More</a>
-      </div>
-      <template x-if="showProgress && current === 3">
-        <div class="absolute bottom-0 left-0 h-1 bg-primary" :style="`width: ${progress}%; transition: width ${interval}ms linear;`"></div>
-      </template>
-    </div>
+    </template>
   </div>
 
   <!-- Navigation Arrows -->
-  <div class="absolute left-0 right-0 top-1/2 z-20 flex justify-between items-center px-6 -translate-y-1/2">
-    <button @click="prev(); restart();" class="btn btn-circle btn-md sm:btn-lg text-xl">❮</button>
-    <button @click="next(); restart();" class="btn btn-circle btn-md sm:btn-lg text-xl">❯</button>
+  <div class="absolute inset-x-0 top-1/2 z-30 flex justify-between items-center px-6 -translate-y-1/2 pointer-events-auto">
+    <button @click="prev(); restart();" type="button" class="btn btn-circle btn-md sm:btn-lg text-xl">❮</button>
+    <button @click="next(); restart();" type="button" class="btn btn-circle btn-md sm:btn-lg text-xl">❯</button>
   </div>
 
   <!-- Thumbnails -->
-  <div class="mt-4 flex justify-center gap-2 sm:gap-4 flex-wrap">
-    <button @click="goTo(0); restart();" class="w-16 h-12 sm:w-24 sm:h-16 border-2 rounded-md overflow-hidden transition-all duration-300" :class="current === 0 ? 'border-primary opacity-100' : 'border-base-300 opacity-50 hover:opacity-80'">
-      <Image src={slide1} alt="" width={300} height={200} class="w-full h-full object-cover" />
-    </button>
-    <button @click="goTo(1); restart();" class="w-16 h-12 sm:w-24 sm:h-16 border-2 rounded-md overflow-hidden transition-all duration-300" :class="current === 1 ? 'border-primary opacity-100' : 'border-base-300 opacity-50 hover:opacity-80'">
-      <Image src={slide2} alt="" width={300} height={200} class="w-full h-full object-cover" />
-    </button>
-    <button @click="goTo(2); restart();" class="w-16 h-12 sm:w-24 sm:h-16 border-2 rounded-md overflow-hidden transition-all duration-300" :class="current === 2 ? 'border-primary opacity-100' : 'border-base-300 opacity-50 hover:opacity-80'">
-      <Image src={slide3} alt="" width={300} height={200} class="w-full h-full object-cover" />
-    </button>
-    <button @click="goTo(3); restart();" class="w-16 h-12 sm:w-24 sm:h-16 border-2 rounded-md overflow-hidden transition-all duration-300" :class="current === 3 ? 'border-primary opacity-100' : 'border-base-300 opacity-50 hover:opacity-80'">
-      <Image src={slide4} alt="" width={300} height={200} class="w-full h-full object-cover" />
-    </button>
+  <div class="mt-4 flex justify-center gap-2 sm:gap-4 flex-wrap pointer-events-auto">
+    <template x-for="(slide, index) in slides" :key="index">
+      <button
+        @click="goTo(index); restart();"
+        type="button"
+        class="w-16 h-12 sm:w-24 sm:h-16 border-2 rounded-md overflow-hidden transition-all duration-300"
+        :class="current === index ? 'border-primary opacity-100' : 'border-base-300 opacity-50 hover:opacity-80'"
+      >
+        <img :src="slide.src" :alt="slide.title" class="w-full h-full object-cover" loading="lazy" />
+      </button>
+    </template>
   </div>
 </div>
 
 <script is:inline>
-  function carouselAutoplay({ autoplay, interval, total }) {
+  // Global carousel factory
+  window.carouselAutoplay = function({ autoplay, interval, showProgress, slides }) {
     return {
+      slides,
       current: 0,
-      interval,
       autoplay,
+      interval,
+      showProgress,
       timer: null,
       progress: 0,
-      showProgress: true,
       start() {
-        this.goTo(0);
+        this.current = 0;
         if (this.autoplay) this.restart();
       },
       restart() {
@@ -189,20 +105,18 @@ const slides = [
         const step = 100 / (this.interval / 100);
         const animation = setInterval(() => {
           this.progress += step;
-          if (this.progress >= 100) {
-            clearInterval(animation);
-          }
+          if (this.progress >= 100) clearInterval(animation);
         }, 100);
       },
       next() {
-        this.current = (this.current + 1) % total;
+        this.current = (this.current + 1) % this.slides.length;
       },
       prev() {
-        this.current = (this.current - 1 + total) % total;
+        this.current = (this.current - 1 + this.slides.length) % this.slides.length;
       },
       goTo(index) {
         this.current = index;
       }
     };
-  }
+  };
 </script>
