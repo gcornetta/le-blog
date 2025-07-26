@@ -1,17 +1,24 @@
 ---
 // src/components/content/Header.astro
 import ThemeToggle from '../ui/ThemeToggle.astro';
+import LogoIcon    from '../../assets/logo.svg';
 ---
 <header class="bg-base-100 border-b shadow-sm">
   <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="/" class="text-2xl font-bold">My Teaching Blog</a>
+    <a href="/" class="flex items-center gap-3" aria-label="My Teaching Blog">
+      <!-- logo-only SVG, imported or inlined -->
+      <LogoIcon class="w-8 h-8" aria-hidden="true" />
+      <!-- live HTML text -->
+      <span class="text-2xl font-bold text-white animate-[neon_2s_ease-in-out_infinite]">Learn<span class="inline-block mr-[0.2rem] ml-1"
+    style="transform: rotate(-15deg);">e</span>lectronics</span>
+    </a>
     <nav>
       <ul class="flex gap-6">
         <li><a href="/" class="hover:underline">Home</a></li>
         <li><a href="/about" class="hover:underline">About</a></li>
          <li><a href="/courses" class="hover:underline">Courses</a></li>
         <li><a href="/blog" class="hover:underline">Blog</a></li>
-        <li><a href="/login" class="hover:underline">Login/Signup</a></li>
+        <li><a href="/login" class="hover:underline">Signup</a></li>
       </ul>
     </nav>
     <ThemeToggle/>

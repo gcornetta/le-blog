@@ -52,3 +52,23 @@
   animation-duration: 0.3s;
 }
 
+/* text logo neon pulse using DaisyUI primary */
+@keyframes neon {
+  0%, 100% {
+    text-shadow:
+      /* white core */
+      0 0 4px #fff,
+      /* indigo glow layers */
+      0 0 8px  var(--color-primary),
+      0 0 16px var(--color-primary),
+      0 0 32px var(--color-primary);
+  }
+  50% {
+    text-shadow:
+      0 0 2px  #fff,
+      0 0 4px  var(--color-primary),
+      0 0 8px  var(--color-primary),
+      0 0 16px var(--color-primary);
+  }
+}
+

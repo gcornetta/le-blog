@@ -45,7 +45,7 @@ const options = JSON.stringify({ autoplay, interval, slides });
         <div class="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-8 pt-12 bg-black/5">
           <h2 x-text="slide.title" class="text-4xl font-bold mb-2 text-white drop-shadow-lg"></h2>
           <p x-text="slide.text" class="max-w-xl mb-4 text-white drop-shadow-lg"></p>
-          <a :href="slide.link" class="btn btn-primary btn-sm sm:btn-md w-fit relative z-40 pointer-events-auto">Learn More</a>
+          <a :href="slide.link" class="btn btn-primary btn-sm sm:btn-md hover:btn-secondary transition w-fit relative z-40 pointer-events-auto">Learn More</a>
         </div>
       </div>
     </template>
