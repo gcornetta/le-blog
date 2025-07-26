@@ -51,6 +51,18 @@ const options = JSON.stringify({ autoplay, interval, slides });
     </template>
   </div>
 
+  <!-- Progress Bar Container -->
+  <div class="absolute bottom-4 left-0 right-0 z-50 px-4">
+    <div class="w-full h-1.5 bg-gray-200 bg-opacity-50 rounded-full overflow-hidden">
+      <div 
+        class="h-full bg-primary rounded-full transition-all duration-300 !ease-linear"
+        :style="`width: ${progress}%`"
+        x-show="autoplay"
+        :class="{'!transition-none': progress === 0}"
+      ></div>
+    </div>
+  </div>
+
   <!-- Arrows -->
   <div class="absolute inset-x-0 top-1/2 z-40 flex justify-between items-center px-6 -translate-y-1/2 pointer-events-auto">
     <button @click="prev(); restart();" type="button" class="btn btn-circle btn-md sm:btn-lg text-xl">❮</button>
@@ -59,34 +71,73 @@ const options = JSON.stringify({ autoplay, interval, slides });
 </div>
 
 <script is:inline>
-  // Global carousel factory
-  window.carouselAutoplay = function({ autoplay, interval, slides }) {
+window.carouselAutoplay = function({ autoplay, interval, slides }) {
+    const TRANSITION_MS = 300;
+    const effectiveInterval = interval - TRANSITION_MS;
+
     return {
       slides,
       current: 0,
       autoplay,
       interval,
-      timer: null,
+      progress: 0,
+      animationId: null,
+      timerId: null,
+      startTime: null,
+
       start() {
         this.current = 0;
+        this.progress = 0;
         if (this.autoplay) this.restart();
       },
+
       restart() {
-        clearInterval(this.timer);
-        this.timer = setInterval(() => {
-          this.next();
-        }, this.interval);
+        // Clear existing animations
+        cancelAnimationFrame(this.animationId);
+        clearTimeout(this.timerId);
+        
+        // Reset state
+        this.progress = 0;
+        this.startTime = performance.now();
+        
+        // Start animation
+        const animate = () => {
+          const now = performance.now();
+          const elapsed = now - this.startTime;
+          
+          // Calculate progress ensuring it reaches exactly 100%
+          this.progress = Math.min(elapsed / effectiveInterval * 100, 100);
+          
+          if (this.progress < 100) {
+            this.animationId = requestAnimationFrame(animate);
+          } else {
+            // Force 100% before moving to next slide
+            this.progress = 100;
+            setTimeout(() => {
+              this.next();
+            }, 16); // Allow one frame at 100% before transition
+          }
+        };
+        
+        this.animationId = requestAnimationFrame(animate);
+        
+        // Backup timer
+        this.timerId = setTimeout(() => this.next(), interval);
       },
+
       next() {
+        cancelAnimationFrame(this.animationId);
+        clearTimeout(this.timerId);
         this.current = (this.current + 1) % this.slides.length;
+        if (this.autoplay) this.restart();
       },
+
       prev() {
+        cancelAnimationFrame(this.animationId);
+        clearTimeout(this.timerId);
         this.current = (this.current - 1 + this.slides.length) % this.slides.length;
-      },
-      goTo(index) {
-        this.current = index;
+        if (this.autoplay) this.restart();
       }
     };
   };
 </script>
-
