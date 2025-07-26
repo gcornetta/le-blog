@@ -3,6 +3,8 @@
 const { title = 'Untitled', description = '' } = Astro.props;  
 import Header from '../components/content/Header.astro';  
 import Footer from '../components/content/Footer.astro';  
+import UpButton from '../components/ui/UpButton.astro';
+
 import '../styles/global.css';  
 ---  
 <html lang="en" class="scroll-smooth" data-theme="light">  
@@ -15,6 +17,7 @@ import '../styles/global.css';
   <body class="min-h-screen flex flex-col bg-base-100 text-base-content">  
     <Header />  
     <slot />  
-    <Footer />  
+    <Footer /> 
+    <UpButton /> 
   </body>  
 </html>

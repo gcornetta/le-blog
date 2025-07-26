@@ -1,10 +1,15 @@
 ---
-// src/components/content/Footer.astro
+// Footer component with newsletter and alert dispatch
+import Alert from '../ui/Alert.astro';
+
 const year = new Date().getFullYear();
 ---
 
-<footer class="bg-gradient-to-br from-base-200 to-base-300 dark:from-base-800 dark:to-base-900 mt-12">
+<footer class="bg-gradient-to-br from-base-200 to-base-300 dark:from-base-800 dark:to-base-900 mt-12 relative">
   <div class="container mx-auto px-4 py-8">
+    <!-- Global alert floating at bottom of screen -->
+    <Alert />
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- About Section -->
       <div>
@@ -29,17 +34,25 @@ const year = new Date().getFullYear();
       <!-- Newsletter -->
       <div>
         <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
-          <form class="space-y-2" @submit.prevent="$store.alert.show('Thanks for subscribing!')">
-            <input 
-              type="email" 
-              placeholder="Your email" 
-              class="input input-bordered w-full" 
-              required
-            />
-            <button type="submit" class="btn btn-primary w-full">
-              Subscribe
-            </button>
-          </form>
+        <form 
+          class="space-y-2" 
+          x-data="{ email: '' }"
+          @submit.prevent="
+            window.dispatchEvent(new CustomEvent('alert-show', { detail: 'Thanks for subscribing!' }));
+            email = '';
+          "
+        >
+          <input 
+            type="email" 
+            x-model="email"
+            placeholder="Your email" 
+            class="input input-bordered w-full" 
+            required
+          />
+          <button type="submit" class="btn btn-primary w-full">
+            Subscribe
+          </button>
+        </form>
       </div>
     </div>
     
