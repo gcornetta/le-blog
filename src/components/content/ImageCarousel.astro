@@ -6,9 +6,8 @@ import slide3 from '../../assets/images/slides/slide-3.tiff';
 import slide4 from '../../assets/images/slides/slide-4.tiff';
 
 // Props
-const autoplay     = Astro.props.autoplay  ?? true;
-const interval     = Astro.props.interval  ?? 5000;
-const showProgress = Astro.props.showProgress ?? true;
+const autoplay = Astro.props.autoplay ?? true;
+const interval = Astro.props.interval ?? 5000;
 
 // Slide data array
 const slides = [
@@ -19,7 +18,7 @@ const slides = [
 ];
 
 // Serialize options for Alpine
-const options = JSON.stringify({ autoplay, interval, showProgress, slides });
+const options = JSON.stringify({ autoplay, interval, slides });
 ---
 
 <div
@@ -48,14 +47,6 @@ const options = JSON.stringify({ autoplay, interval, showProgress, slides });
           <p x-text="slide.text" class="max-w-xl mb-4 text-white drop-shadow-lg"></p>
           <a :href="slide.link" class="btn btn-primary btn-sm sm:btn-md w-fit relative z-40 pointer-events-auto">Learn More</a>
         </div>
-
-        <!-- Progress Bar -->
-        <template x-if="showProgress && current === index">
-          <div
-            class="absolute bottom-0 left-0 h-1 bg-primary"
-            :style="`width: ${progress}%; transition: width ${interval}ms linear;`"
-          ></div>
-        </template>
       </div>
     </template>
   </div>
@@ -69,34 +60,22 @@ const options = JSON.stringify({ autoplay, interval, showProgress, slides });
 
 <script is:inline>
   // Global carousel factory
-  window.carouselAutoplay = function({ autoplay, interval, showProgress, slides }) {
+  window.carouselAutoplay = function({ autoplay, interval, slides }) {
     return {
       slides,
       current: 0,
       autoplay,
       interval,
-      showProgress,
       timer: null,
-      progress: 0,
       start() {
         this.current = 0;
         if (this.autoplay) this.restart();
       },
       restart() {
         clearInterval(this.timer);
-        this.animateProgress();
         this.timer = setInterval(() => {
           this.next();
-          this.animateProgress();
         }, this.interval);
-      },
-      animateProgress() {
-        this.progress = 0;
-        const step = 100 / (this.interval / 100);
-        const animation = setInterval(() => {
-          this.progress += step;
-          if (this.progress >= 100) clearInterval(animation);
-        }, 100);
       },
       next() {
         this.current = (this.current + 1) % this.slides.length;
@@ -110,3 +89,4 @@ const options = JSON.stringify({ autoplay, interval, showProgress, slides });
     };
   };
 </script>
+
