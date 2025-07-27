@@ -1,6 +1,9 @@
+@import "plyr/dist/plyr.css"
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 /* Custom “fade-in” animation for posts */
 @keyframes fadeInUp {
@@ -72,3 +75,15 @@
   }
 }
 
+
+/* Plyr.js custom styles and animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
