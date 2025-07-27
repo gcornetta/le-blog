@@ -1,0 +1,190 @@
+---
+const { youtubeId: passedId, youtubeUrl, thumbnail } = Astro.props;
+
+function extractYoutubeId(input) {
+  if (!input) return '';
+  try {
+    const parsed = new URL(input);
+    if (parsed.hostname === 'youtu.be') return parsed.pathname.slice(1);
+    if (parsed.hostname.includes('youtube.com')) return parsed.searchParams.get('v') ?? '';
+  } catch {
+    return '';
+  }
+  return '';
+}
+
+const idFromUrl = extractYoutubeId(youtubeUrl);
+const youtubeId = passedId || idFromUrl;
+if (!youtubeId) throw new Error('CustomYouTubePlayer.astro requires youtubeId or youtubeUrl');
+---
+
+<div
+  x-data="youTubePlayer"
+  x-init="initPlayer"
+  @mouseenter="showToolbar = true; if (playing) autoHide();"
+  @mousemove="showToolbar = true; if (playing) autoHide();"
+  class="relative aspect-video rounded-lg shadow-lg overflow-hidden group"
+>
+  <!-- YouTube iframe -->
+  <iframe
+    id="yt-iframe"
+    class="absolute top-0 left-0 w-full h-full"
+    src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&modestbranding=1&rel=0&controls=0&fs=1&showinfo=0`}
+    allow="autoplay; encrypted-media"
+    allowfullscreen
+  ></iframe>
+
+  <!-- Sonar Play Overlay -->
+  <template x-if="!playing">
+    <div
+      class="absolute inset-0 bg-black/60 flex items-center justify-center z-10 cursor-pointer"
+      @click="player.playVideo()"
+    >
+      {thumbnail && (
+        <img src={thumbnail} alt="Video thumbnail" class="absolute w-full h-full object-cover z-0" />
+      )}
+      <div class="relative group/play w-20 h-20 flex items-center justify-center">
+        <span class="absolute w-full h-full rounded-full border-2 border-white opacity-60 group-hover/play:animate-ping"></span>
+        <span class="absolute w-full h-full rounded-full border-2 border-white opacity-30 group-hover/play:animate-ping delay-150"></span>
+        <div class="bg-white/90 rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+          <svg class="w-6 h-6 text-gray-900 ml-[2px]" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Toolbar -->
+  <div
+    x-show="showToolbar"
+    x-transition.opacity
+    class="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 flex items-center gap-4 text-sm z-20"
+  >
+    <!-- Play/Pause -->
+    <button @click="togglePlay" class="hover:scale-110 transition">
+      <svg x-show="!playing" class="w-6 h-6" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
+      </svg>
+      <svg x-show="playing" class="w-6 h-6" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M5.5 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8a.5.5 0 0 1 .5-.5zm5 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8a.5.5 0 0 1 .5-.5z"/>
+      </svg>
+    </button>
+
+    <!-- Clock -->
+    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0z" />
+    </svg>
+
+    <!-- Progress Bar -->
+    <div class="relative flex-1 h-2 bg-gray-700 rounded cursor-pointer" @click="seek">
+      <div class="absolute top-0 left-0 h-2 bg-gray-500 rounded" :style="`width: ${buffer}%`"></div>
+      <div class="absolute top-0 left-0 h-2 bg-primary rounded" :style="`width: ${progress}%`"></div>
+    </div>
+
+    <!-- Speaker Icon -->
+    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M5 9v6h4l5 5V4l-5 5H5z"/>
+    </svg>
+
+    <!-- Volume Bar -->
+    <div class="relative w-24 h-2 bg-gray-400 rounded cursor-pointer" @click="changeVolume">
+      <div class="absolute top-0 left-0 h-2 bg-primary rounded" :style="`width: ${volume}%`"></div>
+    </div>
+
+    <!-- Fullscreen -->
+    <button @click="player.getIframe().requestFullscreen()" class="hover:scale-110 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v3m0 8v3a2 2 0 0 1 2 2h-3" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script is:inline>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('youTubePlayer', () => ({
+    player: null,
+    playing: false,
+    muted: false,
+    volume: 100,
+    progress: 0,
+    buffer: 0,
+    showToolbar: true,
+    timeout: null,
+
+    initPlayer() {
+      window.onYouTubeIframeAPIReady = () => {
+        this.player = new YT.Player('yt-iframe', {
+          events: {
+            onReady: () => {
+              this.muted = false;
+              this.volume = this.player.getVolume();
+              this.updateToolbar();
+              this.track();
+            },
+            onStateChange: (e) => {
+              this.playing = e.data === YT.PlayerState.PLAYING;
+              this.updateToolbar();
+              if (this.playing) this.autoHide();
+              else this.showToolbar = true;
+            }
+          }
+        });
+      };
+      
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+    },
+
+    togglePlay() {
+      this.playing ? this.player.pauseVideo() : this.player.playVideo();
+    },
+
+    toggleMute() {
+      this.muted = !this.muted;
+      this.player[this.muted ? 'mute' : 'unMute']();
+    },
+
+    seek(e) {
+      const rect = e.target.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      this.player.seekTo(this.player.getDuration() * percent, true);
+    },
+
+    changeVolume(e) {
+      const rect = e.target.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      this.volume = Math.round(percent * 100);
+      this.player.setVolume(this.volume);
+      this.muted = this.volume === 0;
+    },
+
+    track() {
+      requestAnimationFrame(() => {
+        if (this.player && this.player.getDuration) {
+          this.progress = this.player.getCurrentTime() / this.player.getDuration() * 100;
+          const loaded = this.player.getVideoLoadedFraction();
+          this.buffer = loaded * 100;
+        }
+        this.track();
+      });
+    },
+
+    updateToolbar() {
+      this.showToolbar = true;
+    },
+
+    autoHide() {
+      clearTimeout(this.timeout);
+      this.timeout = setTimeout(() => {
+        if (this.playing) this.showToolbar = false;
+      }, 2000);
+    }
+  }));
+});
+</script>
+
+
+

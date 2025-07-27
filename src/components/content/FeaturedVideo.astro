@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import PlyrPlayer from '../ui/PlyrPlayer.astro'
 import { getFeaturedVideo, getLatestVideos } from '../../utils/videoMetadata.mjs';
 
 const featured = getFeaturedVideo();
@@ -18,15 +19,9 @@ const latestVideos = getLatestVideos();
         </div>
       </div>
     </div>
-    <div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-      <iframe
-        src={`https://www.youtube.com/embed/${featured.youtubeId}?modestbranding=1&rel=0`}
-        allowfullscreen
-        allow="autoplay; encrypted-media"
-        title={featured.title}
-        class="w-full h-full"
-      ></iframe>
-    </div>
+      <div class="relative aspect-video rounded-lg overflow-hidden shadow-lg">
+        <PlyrPlayer youtubeId={featured.youtubeId} />
+      </div>
   </div>
 
   <!-- Row 2: Latest Videos Infinite Carousel -->
@@ -137,4 +132,3 @@ const latestVideos = getLatestVideos();
     });
   });
 </script>
-
