@@ -1,0 +1,27 @@
+---
+// src/components/content/HeroBanner.astro
+import ImageCarousel from '../ui/ImageCarousel.astro';
+---
+
+<section class="relative h-[600px] mb-16 overflow-hidden">
+  <div class="absolute inset-0 z-10">
+    <ImageCarousel autoplay={true} interval={5000} showProgress={false} />
+  </div>
+
+  <div class="absolute inset-0 z-20 bg-black/50 h-full flex items-center justify-center text-center px-4 pointer-events-none">
+    <div class="relative z-0 text-white pointer-events-auto">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4">
+        Welcome to Learn<span
+          class="inline-block mr-[0.2rem] ml-[0.1rem] text-red-500"
+          style="transform: rotate(-15deg);"
+        >e</span>lectronics
+      </h1>
+      <p class="text-lg sm:text-xl md:text-2xl max-w-2xl mx-auto mb-8 opacity-90">
+        Practical insights and resources for students and educators
+      </p>
+      <a href="/blog" class="btn btn-lg btn-primary hover:btn-secondary transition">
+        Read the Blog
+      </a>
+    </div>
+  </div>
+</section>

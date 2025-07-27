@@ -1,0 +1,23 @@
+---
+// src/components/content/FeaturedArticles.astro
+import BlogCard from './BlogCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => (
+  import.meta.env.PROD ? !data.draft : true
+))).filter(post => post.data.featured);
+
+---
+
+{posts.length > 0 && (
+  <section class="mb-20">
+    <h2 class="text-4xl font-semibold mb-8">Featured Articles</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {posts.slice(0, 2).map(post => (
+        <div class="fade-in-up">
+          <BlogCard post={post} featured />
+        </div>
+      ))}
+    </div>
+  </section>
+)}

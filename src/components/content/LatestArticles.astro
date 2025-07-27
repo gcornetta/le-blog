@@ -1,0 +1,25 @@
+---
+// src/components/content/LatestArticles.astro
+import BlogCard from './BlogCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => (
+  import.meta.env.PROD ? !data.draft : true
+))).sort((a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate));
+
+---
+
+{posts.length > 0 && (
+  <section>
+    <h2 class="text-4xl font-semibold mb-8">Latest Articles</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {posts
+        .slice(0, posts.length >= 6 ? 6 : posts.length <= 3 ? posts.length : 3)
+        .map(post => (
+          <div class="fade-in-up">
+            <BlogCard post={post} />
+          </div>
+        ))}
+    </div>
+  </section>
+)}
