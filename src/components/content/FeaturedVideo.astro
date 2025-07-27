@@ -10,7 +10,13 @@ const latestVideos = getLatestVideos();
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start px-6 lg:px-12">
     <div class="prose dark:prose-invert max-w-none">
       <h2 class="text-4xl font-bold mb-4">{featured.title}</h2>
-      <p class="text-lg text-base-content">{featured.description}</p>
+      <!-- Styled excerpt with justified text and accent bar -->
+      <div class="bg-base-200 p-6 rounded-lg flex">
+        <div class="relative border-l-4 border-primary pl-4">
+        <div class="w-1 bg-primary mr-4"></div>
+        <p class="text-lg text-base-content text-justify">{featured.description}</p>
+        </div>
+      </div>
     </div>
     <div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
       <iframe
@@ -27,10 +33,7 @@ const latestVideos = getLatestVideos();
   <div class="w-full bg-base-100 py-8 relative overflow-hidden">
     <h3 class="text-2xl font-semibold mb-6 px-6">Latest Videos</h3>
     <div class="relative px-6">
-      <div
-        id="carousel"
-        class="flex gap-4 overflow-hidden whitespace-nowrap"
-      >
+      <div id="carousel" class="flex gap-4 overflow-hidden whitespace-nowrap">
         <!-- Items will be cloned for infinite effect -->
         {latestVideos.map((video) => (
           <a
@@ -115,6 +118,4 @@ const latestVideos = getLatestVideos();
     });
   });
 </script>
-
-
 
