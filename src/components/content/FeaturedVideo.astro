@@ -33,13 +33,13 @@ const latestVideos = getLatestVideos();
   <div class="w-full bg-base-100 py-8 relative overflow-hidden">
     <h3 class="text-2xl font-semibold mb-6 px-6">Latest Videos</h3>
     <div class="relative px-6">
-      <div id="carousel" class="flex gap-4 overflow-hidden whitespace-nowrap">
+      <div id="carousel" class="flex gap-4 lg:gap-6 overflow-hidden whitespace-nowrap">
         <!-- Items will be cloned for infinite effect -->
         {latestVideos.map((video) => (
           <a
             href={video.youtubeUrl}
             target="_blank"
-            class="group inline-block w-48 aspect-video shrink-0 relative"
+            class="group inline-block w-48 lg:w-64 aspect-video shrink-0 relative"
             aria-label={`Watch ${video.title}`}
           >
             <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
@@ -61,14 +61,14 @@ const latestVideos = getLatestVideos();
       <!-- Controls -->
       <button
         id="prevBtn"
-        class="absolute left-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded-full shadow z-10 focus:outline-none hover:bg-base-200"
+        class="absolute left-2 top-1/2 -translate-y-1/2 z-10 focus:outline-none btn btn-primary btn-circle btn-lg shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition duration-300 ease-in-out transform hover:-translate-y-1"
         aria-label="Previous videos"
       >
         ◀
       </button>
       <button
         id="nextBtn"
-        class="absolute right-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded-full shadow z-10 focus:outline-none hover:bg-base-200"
+        class="absolute right-2 top-1/2 -translate-y-1/2 z-10 focus:outline-none btn btn-primary btn-circle btn-lg shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition duration-300 ease-in-out transform hover:-translate-y-1"
         aria-label="Next videos"
       >
         ▶
