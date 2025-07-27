@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import { getFeaturedVideo, getLatestVideos } from '../../utils/videoMetadata.mjs';
 
 const featured = getFeaturedVideo();
@@ -10,11 +11,10 @@ const latestVideos = getLatestVideos();
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start px-6 lg:px-12">
     <div class="prose dark:prose-invert max-w-none">
       <h2 class="text-4xl font-bold mb-4">{featured.title}</h2>
-      <!-- Styled excerpt with justified text and accent bar -->
       <div class="bg-base-200 p-6 rounded-lg flex">
         <div class="relative border-l-4 border-primary pl-4">
-        <div class="w-1 bg-primary mr-4"></div>
-        <p class="text-lg text-base-content text-justify">{featured.description}</p>
+          <div class="w-1 bg-primary mr-4"></div>
+          <p class="text-lg text-base-content text-justify">{featured.description}</p>
         </div>
       </div>
     </div>
@@ -34,27 +34,51 @@ const latestVideos = getLatestVideos();
     <h3 class="text-2xl font-semibold mb-6 px-6">Latest Videos</h3>
     <div class="relative px-6">
       <div id="carousel" class="flex gap-4 lg:gap-6 overflow-hidden whitespace-nowrap">
-        <!-- Items will be cloned for infinite effect -->
         {latestVideos.map((video) => (
-          <a
-            href={video.youtubeUrl}
-            target="_blank"
-            class="group inline-block w-48 lg:w-64 aspect-video shrink-0 relative"
-            aria-label={`Watch ${video.title}`}
-          >
-            <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
-              <img
-                loading="lazy"
-                src={video.thumbnail}
-                alt={video.title}
-                class="absolute top-0 left-0 w-full h-full object-cover"
-              />
-              <div class="absolute bottom-0 left-0 w-full bg-base-200 text-base-content text-sm p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                <strong>{video.title}</strong><br />
-                {video.duration} • {video.date}
+            <div class="group inline-block w-60 lg:w-80 aspect-video shrink-0 relative">
+              <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
+
+                <!-- Thumbnail image -->
+                <Image
+                  src={video.thumbnail}
+                  alt={video.title}
+                  layout="fill"
+                  class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
+                  format="webp"
+                  loading="lazy"
+                />
+
+                <!-- Play button container with hover-controlled sonar -->
+                <div class="absolute inset-0 flex items-center justify-center z-10">
+                  <a
+                    href={video.youtubeUrl}
+                    target="_blank"
+                    aria-label={`Play ${video.title}`}
+                    class="relative group/play w-14 h-14 flex items-center justify-center"
+                  >
+                    <!-- Outer pulse -->
+                    <span class="absolute w-full h-full rounded-full border-2 border-white opacity-60 group-hover/play:animate-ping"></span>
+                    <!-- Middle ring -->
+                    <span class="absolute w-full h-full rounded-full border-2 border-white opacity-30 group-hover/play:animate-ping delay-150"></span>
+                    <!-- Inner button -->
+                    <div class="bg-white/90 rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                      <svg class="w-5 h-5 text-gray-900 ml-[2px]" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
+                      </svg>
+                    </div>
+                  </a>
+                </div>
+
+                <!-- Metadata bubble -->
+                <div class="absolute bottom-0 left-0 w-full bg-gray-300/85 text-base-content text-sm p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                  <strong>{video.title}</strong><br />
+                  {video.duration} • {video.date}
+                </div>
+
               </div>
             </div>
-          </a>
+
+
         ))}
       </div>
 
@@ -84,17 +108,13 @@ const latestVideos = getLatestVideos();
     const nextBtn = document.getElementById('nextBtn');
     const gap = 16;
 
-    // Clone items for infinite scroll
     const items = Array.from(carousel.children);
     items.forEach(item => carousel.appendChild(item.cloneNode(true)));
     items.slice().reverse().forEach(item => carousel.insertBefore(item.cloneNode(true), carousel.firstChild));
 
-    // Calculate scroll parameters
     const cardWidth = items[0]?.offsetWidth || 192;
     const moveDistance = cardWidth + gap;
     const third = carousel.scrollWidth / 3;
-
-    // Set initial position to middle copy
     carousel.scrollLeft = third;
 
     const scrollBy = (distance) => {
@@ -111,7 +131,6 @@ const latestVideos = getLatestVideos();
     prevBtn.addEventListener('click', () => scrollBy(-moveDistance));
     nextBtn.addEventListener('click', () => scrollBy(moveDistance));
 
-    // Optional: handle resize
     window.addEventListener('resize', () => {
       const newWidth = items[0]?.offsetWidth || 192;
       carousel.scrollLeft = newWidth / cardWidth * carousel.scrollLeft;
