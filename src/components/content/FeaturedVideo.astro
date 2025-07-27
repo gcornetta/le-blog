@@ -12,39 +12,36 @@ const latestVideos = getLatestVideos();
       <h2 class="text-4xl font-bold mb-4">{featured.title}</h2>
       <p class="text-lg text-base-content">{featured.description}</p>
     </div>
-
-    <div class="w-full relative pt-[56.25%]">
-      <div class="plyr__video-embed absolute top-0 left-0 w-full h-full" id="player">
-        <iframe
-          src={`https://www.youtube.com/embed/${featured.youtubeId}?modestbranding=1&rel=0`}
-          allowfullscreen
-          allow="autoplay; encrypted-media"
-          title={featured.title}
-          class="w-full h-full rounded-lg"
-        ></iframe>
-      </div>
+    <div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+      <iframe
+        src={`https://www.youtube.com/embed/${featured.youtubeId}?modestbranding=1&rel=0`}
+        allowfullscreen
+        allow="autoplay; encrypted-media"
+        title={featured.title}
+        class="w-full h-full"
+      ></iframe>
     </div>
   </div>
 
-  <!-- Row 2: Latest Videos Smooth Scrolling -->
+  <!-- Row 2: Latest Videos Infinite Carousel -->
   <div class="w-full bg-base-100 py-8 relative overflow-hidden">
     <h3 class="text-2xl font-semibold mb-6 px-6">Latest Videos</h3>
-
-    <!-- Carousel -->
     <div class="relative px-6">
       <div
         id="carousel"
-        class="flex gap-4 overflow-hidden scroll-smooth"
-        style="scroll-behavior: smooth;"
+        class="flex gap-4 overflow-hidden whitespace-nowrap"
       >
+        <!-- Items will be cloned for infinite effect -->
         {latestVideos.map((video) => (
           <a
             href={video.youtubeUrl}
             target="_blank"
-            class="group w-48 aspect-video shrink-0 relative"
+            class="group inline-block w-48 aspect-video shrink-0 relative"
+            aria-label={`Watch ${video.title}`}
           >
             <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
               <img
+                loading="lazy"
                 src={video.thumbnail}
                 alt={video.title}
                 class="absolute top-0 left-0 w-full h-full object-cover"
@@ -58,33 +55,66 @@ const latestVideos = getLatestVideos();
         ))}
       </div>
 
-      <!-- Arrows -->
+      <!-- Controls -->
       <button
         id="prevBtn"
-        class="absolute left-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded shadow z-10"
-        aria-label="Scroll Left"
-      >◀</button>
+        class="absolute left-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded-full shadow z-10 focus:outline-none hover:bg-base-200"
+        aria-label="Previous videos"
+      >
+        ◀
+      </button>
       <button
         id="nextBtn"
-        class="absolute right-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded shadow z-10"
-        aria-label="Scroll Right"
-      >▶</button>
+        class="absolute right-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded-full shadow z-10 focus:outline-none hover:bg-base-200"
+        aria-label="Next videos"
+      >
+        ▶
+      </button>
     </div>
   </div>
 </section>
 
 <script type="module">
-  const carousel = document.getElementById('carousel');
-  const cardWidth = document.querySelector('#carousel a')?.offsetWidth || 192; // fallback to w-48
-  const gap = 16; // Tailwind gap-4 = 1rem = 16px
+  document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.getElementById('carousel');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const gap = 16;
 
-  document.getElementById('prevBtn').onclick = () => {
-    carousel.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
-  };
+    // Clone items for infinite scroll
+    const items = Array.from(carousel.children);
+    items.forEach(item => carousel.appendChild(item.cloneNode(true)));
+    items.slice().reverse().forEach(item => carousel.insertBefore(item.cloneNode(true), carousel.firstChild));
 
-  document.getElementById('nextBtn').onclick = () => {
-    carousel.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
-  };
+    // Calculate scroll parameters
+    const cardWidth = items[0]?.offsetWidth || 192;
+    const moveDistance = cardWidth + gap;
+    const third = carousel.scrollWidth / 3;
+
+    // Set initial position to middle copy
+    carousel.scrollLeft = third;
+
+    const scrollBy = (distance) => {
+      carousel.scrollBy({ left: distance, behavior: 'smooth' });
+      setTimeout(() => {
+        if (carousel.scrollLeft < third / 2) {
+          carousel.scrollLeft += third;
+        } else if (carousel.scrollLeft > third * 1.5) {
+          carousel.scrollLeft -= third;
+        }
+      }, 350);
+    };
+
+    prevBtn.addEventListener('click', () => scrollBy(-moveDistance));
+    nextBtn.addEventListener('click', () => scrollBy(moveDistance));
+
+    // Optional: handle resize
+    window.addEventListener('resize', () => {
+      const newWidth = items[0]?.offsetWidth || 192;
+      carousel.scrollLeft = newWidth / cardWidth * carousel.scrollLeft;
+    });
+  });
 </script>
+
 
 
