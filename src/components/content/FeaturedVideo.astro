@@ -1,0 +1,90 @@
+---
+import { getFeaturedVideo, getLatestVideos } from '../../utils/videoMetadata.mjs';
+
+const featured = getFeaturedVideo();
+const latestVideos = getLatestVideos();
+---
+
+<section class="py-12 space-y-16">
+  <!-- Row 1: Featured Video -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start px-6 lg:px-12">
+    <div class="prose dark:prose-invert max-w-none">
+      <h2 class="text-4xl font-bold mb-4">{featured.title}</h2>
+      <p class="text-lg text-base-content">{featured.description}</p>
+    </div>
+
+    <div class="w-full relative pt-[56.25%]">
+      <div class="plyr__video-embed absolute top-0 left-0 w-full h-full" id="player">
+        <iframe
+          src={`https://www.youtube.com/embed/${featured.youtubeId}?modestbranding=1&rel=0`}
+          allowfullscreen
+          allow="autoplay; encrypted-media"
+          title={featured.title}
+          class="w-full h-full rounded-lg"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Latest Videos Smooth Scrolling -->
+  <div class="w-full bg-base-100 py-8 relative overflow-hidden">
+    <h3 class="text-2xl font-semibold mb-6 px-6">Latest Videos</h3>
+
+    <!-- Carousel -->
+    <div class="relative px-6">
+      <div
+        id="carousel"
+        class="flex gap-4 overflow-hidden scroll-smooth"
+        style="scroll-behavior: smooth;"
+      >
+        {latestVideos.map((video) => (
+          <a
+            href={video.youtubeUrl}
+            target="_blank"
+            class="group w-48 aspect-video shrink-0 relative"
+          >
+            <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                class="absolute top-0 left-0 w-full h-full object-cover"
+              />
+              <div class="absolute bottom-0 left-0 w-full bg-base-200 text-base-content text-sm p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                <strong>{video.title}</strong><br />
+                {video.duration} • {video.date}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <!-- Arrows -->
+      <button
+        id="prevBtn"
+        class="absolute left-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded shadow z-10"
+        aria-label="Scroll Left"
+      >◀</button>
+      <button
+        id="nextBtn"
+        class="absolute right-2 top-1/2 -translate-y-1/2 bg-base-100 p-2 rounded shadow z-10"
+        aria-label="Scroll Right"
+      >▶</button>
+    </div>
+  </div>
+</section>
+
+<script type="module">
+  const carousel = document.getElementById('carousel');
+  const cardWidth = document.querySelector('#carousel a')?.offsetWidth || 192; // fallback to w-48
+  const gap = 16; // Tailwind gap-4 = 1rem = 16px
+
+  document.getElementById('prevBtn').onclick = () => {
+    carousel.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+  };
+
+  document.getElementById('nextBtn').onclick = () => {
+    carousel.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+  };
+</script>
+
+
