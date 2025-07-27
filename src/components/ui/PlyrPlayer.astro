@@ -25,31 +25,35 @@ if (!youtubeId) throw new Error('CustomYouTubePlayer.astro requires youtubeId or
   @mousemove="showToolbar = true; if (playing) autoHide();"
   class="relative aspect-video rounded-lg shadow-lg overflow-hidden group"
 >
-  <!-- YouTube iframe -->
+  <!-- YouTube iframe with pointer-events disabled -->
   <iframe
     id="yt-iframe"
-    class="absolute top-0 left-0 w-full h-full"
+    class="absolute top-0 left-0 w-full h-full pointer-events-none"
     src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&modestbranding=1&rel=0&controls=0&fs=1&showinfo=0`}
     allow="autoplay; encrypted-media"
     allowfullscreen
   ></iframe>
 
-  <!-- Sonar Play Overlay -->
+  <!-- Visual overlay with clickable play button only -->
   <template x-if="!playing">
-    <div
-      class="absolute inset-0 bg-black/60 flex items-center justify-center z-10 cursor-pointer"
-      @click="player.playVideo()"
-    >
+    <div class="absolute inset-0 bg-black/60 z-10">
       {thumbnail && (
-        <img src={thumbnail} alt="Video thumbnail" class="absolute w-full h-full object-cover z-0" />
+        <img src={thumbnail} alt="Video thumbnail" class="absolute w-full h-full object-cover z-0 pointer-events-none" />
       )}
-      <div class="relative group/play w-20 h-20 flex items-center justify-center">
-        <span class="absolute w-full h-full rounded-full border-2 border-white opacity-60 group-hover/play:animate-ping"></span>
-        <span class="absolute w-full h-full rounded-full border-2 border-white opacity-30 group-hover/play:animate-ping delay-150"></span>
-        <div class="bg-white/90 rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-          <svg class="w-6 h-6 text-gray-900 ml-[2px]" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
-          </svg>
+      <div 
+        class="absolute inset-0 flex items-center justify-center"
+      >
+        <div 
+          class="relative group/play w-20 h-20 flex items-center justify-center cursor-pointer"
+          @click="togglePlay"
+        >
+          <span class="absolute w-full h-full rounded-full border-2 border-white opacity-60 group-hover/play:animate-ping pointer-events-none"></span>
+          <span class="absolute w-full h-full rounded-full border-2 border-white opacity-30 group-hover/play:animate-ping delay-150 pointer-events-none"></span>
+          <div class="bg-white/90 rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-20">
+            <svg class="w-6 h-6 text-gray-900 ml-[2px]" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -59,9 +63,9 @@ if (!youtubeId) throw new Error('CustomYouTubePlayer.astro requires youtubeId or
   <div
     x-show="showToolbar"
     x-transition.opacity
-    class="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 flex items-center gap-4 text-sm z-20"
+    class="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 flex items-center gap-4 text-sm z-30"
   >
-    <!-- Play/Pause -->
+    <!-- Play/Pause Button -->
     <button @click="togglePlay" class="hover:scale-110 transition">
       <svg x-show="!playing" class="w-6 h-6" fill="currentColor" viewBox="0 0 16 16">
         <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
@@ -71,7 +75,7 @@ if (!youtubeId) throw new Error('CustomYouTubePlayer.astro requires youtubeId or
       </svg>
     </button>
 
-    <!-- Clock -->
+    <!-- Time Indicator -->
     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0z" />
     </svg>
@@ -82,17 +86,15 @@ if (!youtubeId) throw new Error('CustomYouTubePlayer.astro requires youtubeId or
       <div class="absolute top-0 left-0 h-2 bg-primary rounded" :style="`width: ${progress}%`"></div>
     </div>
 
-    <!-- Speaker Icon -->
+    <!-- Volume Controls -->
     <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
       <path d="M5 9v6h4l5 5V4l-5 5H5z"/>
     </svg>
-
-    <!-- Volume Bar -->
     <div class="relative w-24 h-2 bg-gray-400 rounded cursor-pointer" @click="changeVolume">
       <div class="absolute top-0 left-0 h-2 bg-primary rounded" :style="`width: ${volume}%`"></div>
     </div>
 
-    <!-- Fullscreen -->
+    <!-- Fullscreen Button -->
     <button @click="player.getIframe().requestFullscreen()" class="hover:scale-110 transition">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v3m0 8v3a2 2 0 0 1 2 2h-3" />
@@ -185,6 +187,4 @@ document.addEventListener('alpine:init', () => {
   }));
 });
 </script>
-
-
 
