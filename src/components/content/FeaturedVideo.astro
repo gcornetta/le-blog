@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
-import PlyrPlayer from '../ui/PlyrPlayer.astro'
+import VideoModal from '../ui/VideoModal.astro';
+import VideoPlayer from '../ui/VideoPlayer.astro';
 import { getFeaturedVideo, getLatestVideos } from '../../utils/videoMetadata.mjs';
 
 const featured = getFeaturedVideo();
@@ -8,7 +9,6 @@ const latestVideos = getLatestVideos();
 ---
 
 <section class="py-12 space-y-16">
-  <!-- Row 1: Featured Video -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start px-6 lg:px-12">
     <div class="prose dark:prose-invert max-w-none">
       <h2 class="text-4xl font-bold mb-4">{featured.title}</h2>
@@ -19,65 +19,61 @@ const latestVideos = getLatestVideos();
         </div>
       </div>
     </div>
-      <div class="relative aspect-video rounded-lg overflow-hidden shadow-lg">
-        <PlyrPlayer youtubeId={featured.youtubeId} />
-      </div>
+    <div class="relative aspect-video rounded-lg overflow-hidden shadow-lg">
+      <VideoPlayer 
+        youtubeId={featured.youtubeId} 
+        iframeId="featured-video"
+        thumbnail={featured.thumbnail}
+        client:load
+        data-video-id={featured.youtubeId}
+      />
+    </div>
   </div>
 
-  <!-- Row 2: Latest Videos Infinite Carousel -->
   <div class="w-full bg-base-100 py-8 relative overflow-hidden">
     <h3 class="text-2xl font-semibold mb-6 px-6">Latest Videos</h3>
     <div class="relative px-6">
       <div id="carousel" class="flex gap-4 lg:gap-6 overflow-hidden whitespace-nowrap">
         {latestVideos.map((video) => (
-            <div class="group inline-block w-60 lg:w-80 aspect-video shrink-0 relative">
-              <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
+          <div class="group inline-block w-60 lg:w-80 aspect-video shrink-0 relative">
+            <div class="w-full h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition">
+              <Image
+                src={video.thumbnail}
+                alt={video.title}
+                layout="fill"
+                class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
+                format="webp"
+                loading="lazy"
+              />
 
-                <!-- Thumbnail image -->
-                <Image
-                  src={video.thumbnail}
-                  alt={video.title}
-                  layout="fill"
-                  class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
-                  format="webp"
-                  loading="lazy"
-                />
+              <div class="absolute inset-0 flex items-center justify-center z-10">
+                <button
+                  @click.prevent="$dispatch('open-video-modal', {
+                    youtubeId: '{video.youtubeId}',
+                    title: '{video.title}'
+                  })"
+                  aria-label={`Play ${video.title}`}
+                  class="relative group/play w-14 h-14 flex items-center justify-center"
+                >
+                  <span class="absolute w-full h-full rounded-full border-2 border-white opacity-60 group-hover/play:animate-ping"></span>
+                  <span class="absolute w-full h-full rounded-full border-2 border-white opacity-30 group-hover/play:animate-ping delay-150"></span>
+                  <div class="bg-white/90 rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-gray-900 ml-[2px]" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
+                    </svg>
+                  </div>
+                </button>
+              </div>
 
-                <!-- Play button container with hover-controlled sonar -->
-                <div class="absolute inset-0 flex items-center justify-center z-10">
-                  <a
-                    href={video.youtubeUrl}
-                    target="_blank"
-                    aria-label={`Play ${video.title}`}
-                    class="relative group/play w-14 h-14 flex items-center justify-center"
-                  >
-                    <!-- Outer pulse -->
-                    <span class="absolute w-full h-full rounded-full border-2 border-white opacity-60 group-hover/play:animate-ping"></span>
-                    <!-- Middle ring -->
-                    <span class="absolute w-full h-full rounded-full border-2 border-white opacity-30 group-hover/play:animate-ping delay-150"></span>
-                    <!-- Inner button -->
-                    <div class="bg-white/90 rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                      <svg class="w-5 h-5 text-gray-900 ml-[2px]" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M6.79 5.093a.5.5 0 0 1 .765-.424l4.5 2.907a.5.5 0 0 1 0 .848l-4.5 2.907a.5.5 0 0 1-.765-.424V5.093z"/>
-                      </svg>
-                    </div>
-                  </a>
-                </div>
-
-                <!-- Metadata bubble -->
-                <div class="absolute bottom-0 left-0 w-full bg-gray-300/85 text-base-content text-sm p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                  <strong>{video.title}</strong><br />
-                  {video.duration} • {video.date}
-                </div>
-
+              <div class="absolute bottom-0 left-0 w-full bg-gray-300/85 text-base-content text-sm p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                <strong>{video.title}</strong><br />
+                {video.duration} • {video.date}
               </div>
             </div>
-
-
+          </div>
         ))}
       </div>
 
-      <!-- Controls -->
       <button
         id="prevBtn"
         class="absolute left-2 top-1/2 -translate-y-1/2 z-10 focus:outline-none btn btn-primary btn-circle btn-lg shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition duration-300 ease-in-out transform hover:-translate-y-1"
@@ -96,6 +92,8 @@ const latestVideos = getLatestVideos();
   </div>
 </section>
 
+<VideoModal latestVideos={latestVideos} />
+
 <script type="module">
   document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.getElementById('carousel');
@@ -107,28 +105,59 @@ const latestVideos = getLatestVideos();
     items.forEach(item => carousel.appendChild(item.cloneNode(true)));
     items.slice().reverse().forEach(item => carousel.insertBefore(item.cloneNode(true), carousel.firstChild));
 
-    const cardWidth = items[0]?.offsetWidth || 192;
-    const moveDistance = cardWidth + gap;
-    const third = carousel.scrollWidth / 3;
-    carousel.scrollLeft = third;
+    const initialCardWidth = items[0]?.offsetWidth || 240;
+    const numberOfOriginalItems = items.length / 3;
+    carousel.scrollLeft = (initialCardWidth + gap) * numberOfOriginalItems;
 
     const scrollBy = (distance) => {
       carousel.scrollBy({ left: distance, behavior: 'smooth' });
       setTimeout(() => {
-        if (carousel.scrollLeft < third / 2) {
-          carousel.scrollLeft += third;
-        } else if (carousel.scrollLeft > third * 1.5) {
-          carousel.scrollLeft -= third;
+        const currentScrollLeft = carousel.scrollLeft;
+        const totalWidthOfOneSet = (initialCardWidth + gap) * numberOfOriginalItems;
+
+        if (currentScrollLeft < totalWidthOfOneSet / 2) {
+          carousel.scrollLeft += totalWidthOfOneSet;
+        } else if (currentScrollLeft > totalWidthOfOneSet * 1.5) {
+          carousel.scrollLeft -= totalWidthOfOneSet;
         }
       }, 350);
     };
 
-    prevBtn.addEventListener('click', () => scrollBy(-moveDistance));
-    nextBtn.addEventListener('click', () => scrollBy(moveDistance));
+    prevBtn.addEventListener('click', () => {
+      const currentCardWidth = items[0]?.offsetWidth || 240;
+      const currentMoveDistance = currentCardWidth + gap;
+      scrollBy(-currentMoveDistance);
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      const currentCardWidth = items[0]?.offsetWidth || 240;
+      const currentMoveDistance = currentCardWidth + gap;
+      scrollBy(currentMoveDistance);
+    });
 
     window.addEventListener('resize', () => {
-      const newWidth = items[0]?.offsetWidth || 192;
-      carousel.scrollLeft = newWidth / cardWidth * carousel.scrollLeft;
+      const newCardWidth = items[0]?.offsetWidth || 240;
+      carousel.scrollLeft = (newCardWidth + gap) * numberOfOriginalItems;
     });
+
+    let autoScrollInterval;
+    const startAutoScroll = () => {
+      autoScrollInterval = setInterval(() => {
+        const currentCardWidth = items[0]?.offsetWidth || 240;
+        const currentMoveDistance = currentCardWidth + gap;
+        scrollBy(currentMoveDistance);
+      }, 5000);
+    };
+
+    const stopAutoScroll = () => {
+      clearInterval(autoScrollInterval);
+    };
+
+    carousel.addEventListener('mouseenter', stopAutoScroll);
+    carousel.addEventListener('mouseleave', startAutoScroll);
+    prevBtn.addEventListener('click', () => { stopAutoScroll(); startAutoScroll(); });
+    nextBtn.addEventListener('click', () => { stopAutoScroll(); startAutoScroll(); });
+
+    startAutoScroll();
   });
 </script>

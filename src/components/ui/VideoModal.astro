@@ -1,0 +1,74 @@
+---
+import VideoPlayer from './VideoPlayer.astro';
+const { latestVideos = [] } = Astro.props;
+---
+
+<div
+  x-data="{
+    open: false,
+    currentYoutubeId: '',
+    videoTitle: '',
+    initializedPlayers: new Set(),
+    handleVideoOpen(youtubeId, title) {
+      this.open = true;
+      this.currentYoutubeId = youtubeId;
+      this.videoTitle = title;
+      
+      this.$nextTick(() => {
+        const playerEl = this.$el.querySelector(`[data-video-id='${youtubeId}']`);
+        if (playerEl && !this.initializedPlayers.has(youtubeId)) {
+          playerEl.__x.$data.initPlayer();
+          this.initializedPlayers.add(youtubeId);
+        }
+      });
+    }
+  }"
+  @open-video-modal.window="handleVideoOpen($event.detail.youtubeId, $event.detail.title)"
+  @close-video-modal.window="
+    open = false;
+    currentYoutubeId = '';
+  "
+  x-show="open"
+  x-transition:enter="transition ease-out duration-300"
+  x-transition:enter-start="opacity-0 scale-90"
+  x-transition:enter-end="opacity-100 scale-100"
+  x-transition:leave="transition ease-in duration-200"
+  x-transition:leave-start="opacity-100 scale-100"
+  x-transition:leave-end="opacity-0 scale-90"
+  class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+  style="display: none;"
+>
+  <div
+    class="fixed inset-0 bg-black/80"
+    @click="open = false; currentYoutubeId = '';"
+  ></div>
+
+  <div
+    class="relative bg-base-200 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+    @click.stop
+    x-trap.noscroll.inert="open"
+  >
+    <div class="flex justify-between items-center p-4 bg-base-300 rounded-t-lg">
+      <h3 class="text-xl font-semibold text-base-content" x-text="videoTitle"></h3>
+      <button @click="open = false; currentYoutubeId = '';" class="btn btn-sm btn-circle btn-ghost text-base-content">✕</button>
+    </div>
+
+    <div class="relative aspect-video overflow-hidden">
+      {latestVideos.map((video, index) => (
+        <div 
+          x-show="currentYoutubeId === '{video.youtubeId}'"
+          x-transition
+          style="display: none;"
+          data-video-id={video.youtubeId}
+        >
+          <VideoPlayer
+            youtubeId={video.youtubeId}
+            iframeId={`modal-video-${index}`}
+            thumbnail={video.thumbnail}
+            client:visible
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
