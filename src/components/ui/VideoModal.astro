@@ -23,6 +23,7 @@ const { latestVideos = [] } = Astro.props;
       });
     }
   }"
+
   @open-video-modal.window="handleVideoOpen($event.detail.youtubeId, $event.detail.title)"
   @close-video-modal.window="
     open = false;
@@ -65,7 +66,6 @@ const { latestVideos = [] } = Astro.props;
             youtubeId={video.youtubeId}
             iframeId={`modal-video-${index}`}
             thumbnail={video.thumbnail}
-            client:visible
           />
         </div>
       ))}

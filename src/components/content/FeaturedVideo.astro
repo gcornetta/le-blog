@@ -24,8 +24,6 @@ const latestVideos = getLatestVideos();
         youtubeId={featured.youtubeId} 
         iframeId="featured-video"
         thumbnail={featured.thumbnail}
-        client:load
-        data-video-id={featured.youtubeId}
       />
     </div>
   </div>
@@ -48,10 +46,10 @@ const latestVideos = getLatestVideos();
 
               <div class="absolute inset-0 flex items-center justify-center z-10">
                 <button
-                  @click.prevent="$dispatch('open-video-modal', {
+                  @click.prevent=`$dispatch('open-video-modal', {
                     youtubeId: '{video.youtubeId}',
-                    title: '{video.title}'
-                  })"
+                    title: '${video.title}'
+                  })`
                   aria-label={`Play ${video.title}`}
                   class="relative group/play w-14 h-14 flex items-center justify-center"
                 >
@@ -95,6 +93,7 @@ const latestVideos = getLatestVideos();
 <VideoModal latestVideos={latestVideos} />
 
 <script type="module">
+  // Your existing carousel JavaScript
   document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.getElementById('carousel');
     const prevBtn = document.getElementById('prevBtn');
@@ -126,13 +125,13 @@ const latestVideos = getLatestVideos();
     prevBtn.addEventListener('click', () => {
       const currentCardWidth = items[0]?.offsetWidth || 240;
       const currentMoveDistance = currentCardWidth + gap;
-      scrollBy(-currentMoveDistance);
+      scrollBy(currentMoveDistance);
     });
     
     nextBtn.addEventListener('click', () => {
       const currentCardWidth = items[0]?.offsetWidth || 240;
       const currentMoveDistance = currentCardWidth + gap;
-      scrollBy(currentMoveDistance);
+      scrollBy(-currentMoveDistance);
     });
 
     window.addEventListener('resize', () => {
