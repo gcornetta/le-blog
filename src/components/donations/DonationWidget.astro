@@ -1,8 +1,7 @@
 ---
 // File: src/components/donations/DonationWidget.astro
-// Ensure donate button always visible; sandbox ID if none provided
 const PAYPAL_CLIENT_ID = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || 'sb';
-const PAYPAL_BUSINESS_ID = import.meta.env.PUBLIC_PAYPAL_BUSINESS_ID;
+const PAYPAL_BUSINESS_ID = import.meta.env.PUBLIC_PAYPAL_BUSINESS_ID; // THIS IS CRUCIAL. Double-check your .env file!
 ---
 
 <section class="my-12 p-8 bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-700 dark:to-purple-900 text-white rounded-2xl shadow-xl">
@@ -20,12 +19,12 @@ const PAYPAL_BUSINESS_ID = import.meta.env.PUBLIC_PAYPAL_BUSINESS_ID;
         <option value="20">€20</option>
       </select>
     </div>
-    <!-- PayPal Button Container -->
-    <div class="w-full flex justify-center">
+    <div class="w-full flex justify-center" id="paypal-smart-button-area">
       <div id="paypal-button-container"></div>
     </div>
-    <!-- Fallback DaisyUI Button -->
-    <button id="fallback-btn" class="btn btn-lg btn-primary">Donate €5</button>
+    <button id="fallback-btn" class="btn btn-lg btn-primary bg-indigo-600 hover:bg-indigo-700 dark:bg-purple-800 dark:hover:bg-purple-900">
+      Donate €5
+    </button>
   </div>
 </section>
 
@@ -34,33 +33,74 @@ const PAYPAL_BUSINESS_ID = import.meta.env.PUBLIC_PAYPAL_BUSINESS_ID;
   document.addEventListener('DOMContentLoaded', () => {
     const amountSelect = document.getElementById('donation-amount');
     const fallbackBtn = document.getElementById('fallback-btn');
+    const paypalButtonContainer = document.getElementById('paypal-button-container');
+    const paypalSmartButtonArea = document.getElementById('paypal-smart-button-area');
 
-    // Update fallback label
+    const isDarkMode = () => {
+      const htmlElement = document.documentElement;
+      return htmlElement.getAttribute('data-theme') === 'dark' ||
+             (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    };
+
+    const manageButtonVisibility = () => {
+      if (isDarkMode()) {
+        paypalSmartButtonArea.style.display = 'none';
+        fallbackBtn.style.display = 'block';
+      } else {
+        paypalSmartButtonArea.style.display = 'flex';
+        fallbackBtn.style.display = 'none';
+
+        if (!paypalButtonContainer.hasChildNodes() && window.paypal) {
+          paypal.Buttons({
+            style: {
+              layout: 'vertical',
+              color: 'gold',
+              shape: 'pill',
+              label: 'donate'
+              // No 'height' or 'width' here directly, as PayPal controls this
+            },
+            createOrder: (data, actions) => {
+              return actions.order.create({ purchase_units: [{ amount: { value: amountSelect.value } }] });
+            },
+            onApprove: (data, actions) => {
+              return actions.order.capture().then(details => {
+                alert(`Thank you ${details.payer.name.given_name} for your donation of €${amountSelect.value}!`);
+              });
+            }
+          }).render('#paypal-button-container');
+        }
+      }
+    };
+
     amountSelect.addEventListener('change', () => {
       fallbackBtn.innerText = `Donate €${amountSelect.value}`;
     });
 
-    // Fallback click opens PayPal donate page
     fallbackBtn.addEventListener('click', () => {
       const amt = amountSelect.value;
       const business = encodeURIComponent(PAYPAL_BUSINESS_ID || '');
+
+      if (!business) {
+          console.error("Error: PAYPAL_BUSINESS_ID is not set or empty. Cannot generate valid PayPal URL.");
+          alert("Donation is currently unavailable. Please ensure the PayPal Business ID is configured.");
+          return;
+      }
+
       const url = `https://www.paypal.com/donate?business=${business}&amount=${amt}&currency_code=EUR`;
       window.open(url, '_blank');
     });
 
-    // Render PayPal Buttons centered
-    if (window.paypal) {
-      paypal.Buttons({
-        style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'donate' },
-        createOrder: (data, actions) => {
-          return actions.order.create({ purchase_units: [{ amount: { value: amountSelect.value } }] });
-        },
-        onApprove: (data, actions) => {
-          return actions.order.capture().then(details => {
-            alert(`Thank you ${details.payer.name.given_name} for your donation of €${amountSelect.value}!`);
-          });
-        }
-      }).render('#paypal-button-container');
-    }
+    manageButtonVisibility();
+
+    const observer = new MutationObserver(() => {
+      manageButtonVisibility();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   });
 </script>
+
+<style is:global>
+  #paypal-button-container {
+    min-width: 300px; 
+  }
+</style>
