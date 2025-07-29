@@ -1,0 +1,66 @@
+---
+// File: src/components/donations/DonationWidget.astro
+// Ensure donate button always visible; sandbox ID if none provided
+const PAYPAL_CLIENT_ID = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || 'sb';
+const PAYPAL_BUSINESS_ID = import.meta.env.PUBLIC_PAYPAL_BUSINESS_ID;
+---
+
+<section class="my-12 p-8 bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-700 dark:to-purple-900 text-white rounded-2xl shadow-xl">
+  <div class="text-center mb-6">
+    <h2 class="text-3xl font-bold">Support This Blog</h2>
+    <p class="mt-2">If you find my content helpful, please consider making a donation to help me keep creating free learning resources.</p>
+  </div>
+  <div class="flex flex-col items-center space-y-4">
+    <div class="w-full max-w-xs">
+      <label for="donation-amount" class="block text-white mb-2 text-center">Select donation amount:</label>
+      <select id="donation-amount" class="select select-bordered bg-white text-black w-full">
+        <option value="5">€5</option>
+        <option value="10">€10</option>
+        <option value="15">€15</option>
+        <option value="20">€20</option>
+      </select>
+    </div>
+    <!-- PayPal Button Container -->
+    <div class="w-full flex justify-center">
+      <div id="paypal-button-container"></div>
+    </div>
+    <!-- Fallback DaisyUI Button -->
+    <button id="fallback-btn" class="btn btn-lg btn-primary">Donate €5</button>
+  </div>
+</section>
+
+<script async src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=EUR`}></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const amountSelect = document.getElementById('donation-amount');
+    const fallbackBtn = document.getElementById('fallback-btn');
+
+    // Update fallback label
+    amountSelect.addEventListener('change', () => {
+      fallbackBtn.innerText = `Donate €${amountSelect.value}`;
+    });
+
+    // Fallback click opens PayPal donate page
+    fallbackBtn.addEventListener('click', () => {
+      const amt = amountSelect.value;
+      const business = encodeURIComponent(PAYPAL_BUSINESS_ID || '');
+      const url = `https://www.paypal.com/donate?business=${business}&amount=${amt}&currency_code=EUR`;
+      window.open(url, '_blank');
+    });
+
+    // Render PayPal Buttons centered
+    if (window.paypal) {
+      paypal.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'donate' },
+        createOrder: (data, actions) => {
+          return actions.order.create({ purchase_units: [{ amount: { value: amountSelect.value } }] });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            alert(`Thank you ${details.payer.name.given_name} for your donation of €${amountSelect.value}!`);
+          });
+        }
+      }).render('#paypal-button-container');
+    }
+  });
+</script>

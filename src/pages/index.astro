@@ -5,6 +5,7 @@ import FeaturedCourses from '../components/content/FeaturedCourses.astro';
 import FeaturedVideo from '../components/content/FeaturedVideo.astro';
 import FeaturedArticles from '../components/content/FeaturedArticles.astro';
 import LatestArticles from '../components/content/LatestArticles.astro';
+import DonationWidget from '../components/donations/DonationWidget.astro';
 ---
 
 <BaseLayout title="Home | My Teaching Resources" description="Welcome to my teaching blog">
@@ -13,6 +14,7 @@ import LatestArticles from '../components/content/LatestArticles.astro';
   <main class="container mx-auto px-4 pb-16">
     <FeaturedCourses />
     <FeaturedVideo />
+    <DonationWidget />
     <FeaturedArticles />
     <LatestArticles />
   </main>
