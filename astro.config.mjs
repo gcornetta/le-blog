@@ -5,14 +5,23 @@ import tailwind  from '@astrojs/tailwind';
 import cloudflare from '@astrojs/cloudflare';
 import rss       from '@astrojs/rss';
 import sitemap   from '@astrojs/sitemap';
+import svelte from '@astrojs/svelte';
+
+import db from '@astrojs/db';
 
 export default defineConfig({
   site: 'https://my-domain.com',  
   integrations: [
     mdx(),
     alpine(),
-    tailwind(),       // ← PostCSS + Tailwind + DaisyUI
-    sitemap(),        // ← auto sitemap.xml
+    // ← PostCSS + Tailwind + DaisyUI
+    tailwind(),
+    // ← auto sitemap.xml
+    sitemap(),
+    svelte({ 
+      extensions: ['.svelte'] 
+    }),
+    db(),
   ],
   output: 'server',
   adapter: cloudflare({
