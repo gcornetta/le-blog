@@ -1,4 +1,4 @@
-import thumbnails from '../assets/thumbnailMap.mjs';
+import thumbnails from '../../assets/thumbnailMap.mjs';
 
 export function getFeaturedVideo() {
   return {

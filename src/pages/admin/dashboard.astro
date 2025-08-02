@@ -1,0 +1,22 @@
+---
+// src/pages/admin/dashboard.astro
+// The admin dashboard page, protected by a server-side check.
+
+import AuthLayout from "../../layouts/AuthLayout.astro";
+import Dashboard from "../../components/dashboard/Dashboard.svelte";
+
+// Import the session validation logic
+import { verifyToken, SESSION_COOKIE_NAME } from "../../utils/auth/auth.js";
+
+// Server-side check for an existing session
+const token = Astro.cookies.get(SESSION_COOKIE_NAME)?.value;
+const payload = await (token ? verifyToken(token) : null);
+
+// If no valid session exists, redirect to the login page
+if (!payload) {
+  return Astro.redirect('/admin');
+}
+---
+<AuthLayout title="Admin Dashboard">
+  <Dashboard client:only="svelte" />
+</AuthLayout>

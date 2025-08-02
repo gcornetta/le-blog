@@ -1,0 +1,100 @@
+---
+// src/components/auth/Login.astro
+import { db, FailedLogins } from 'astro:db';
+import { SESSION_COOKIE_NAME } from '../../utils/auth/auth.js';
+
+// Session check
+const token = Astro.cookies.get(SESSION_COOKIE_NAME)?.value;
+if (token) return Astro.redirect('/admin/dashboard');
+
+// IP blocking check
+const ip = Astro.clientAddress || 'unknown';
+const recentFailedAttempts = await db.select()
+  .from(FailedLogins)
+  .where('ip', '=', ip)
+  .where('attempt_time', '>=', new Date(Date.now() - 30 * 60 * 1000))
+  .limit(3);
+
+const isBlocked = recentFailedAttempts.length >= 3;
+---
+
+<div class="hero min-h-screen bg-base-200">
+  <div class="hero-content flex-col lg:flex-row-reverse">
+    <div class="text-center lg:text-left">
+      <h1 class="text-5xl font-bold">Admin Login</h1>
+      <p class="py-6">Access the administration panel</p>
+    </div>
+
+    <div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100"
+         x-data="{
+           email: '',
+           password: '',
+           error: '',
+           loading: false,
+           async handleSubmit() {
+             this.loading = true;
+             this.error = '';
+             try {
+               const res = await fetch('/api/v1/auth/login', {
+                 method: 'POST',
+                 headers: {
+                   'Content-Type': 'application/json'
+                 },
+                 body: JSON.stringify({
+                   email: this.email,
+                   password: this.password
+                 })
+               });
+
+               const data = await res.json();
+               if (!res.ok) throw new Error(data.error || 'Login failed');
+               window.location.href = '/admin/dashboard';
+             } catch (err) {
+               this.error = err.message;
+               if (err.message.toLowerCase().includes('attempts')) {
+                 setTimeout(() => location.reload(), 1500);
+               }
+             } finally {
+               this.loading = false;
+             }
+           }
+         }">
+      <form class="card-body" @submit.prevent="handleSubmit">
+        {isBlocked ? (
+          <div class="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Too many failed attempts. Try again later.</span>
+          </div>
+        ) : (
+          <>
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">Email</span>
+              </label>
+              <input type="email" placeholder="admin@example.com"
+                     class="input input-bordered" x-model="email" required
+                     :disabled="loading" />
+            </div>
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">Password</span>
+              </label>
+              <input type="password" placeholder="********"
+                     class="input input-bordered" x-model="password" required
+                     :disabled="loading" />
+            </div>
+            <div x-show="error" x-text="error" class="text-error text-sm mt-2"></div>
+            <div class="form-control mt-6">
+              <button type="submit" class="btn btn-primary" :disabled="loading">
+                <span x-show="loading" class="loading loading-spinner"></span>
+                <span x-show="!loading">Login</span>
+              </button>
+            </div>
+          </>
+        )}
+      </form>
+    </div>
+  </div>
+</div>

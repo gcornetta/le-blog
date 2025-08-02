@@ -9,7 +9,8 @@
     "seed": "npx astro db execute ./db/seed.mjs --remote",
     "preview": "astro preview",
     "astro": "astro",
-    "hash-password": "node ./scripts/hash-password.js"
+    "hash-password": "node ./scripts/hash-password.js",
+    "generate-jwt-secret": "node ./scripts/generate-jwt-secret.js"
   },
   "dependencies": {
     "@astrojs/db": "^0.16.0",
@@ -17,7 +18,11 @@
     "@nanostores/persistent": "^1.1.0",
     "astro": "^5.12.8",
     "bcryptjs": "^3.0.2",
+    "chalk": "^5.4.1",
+    "clipboardy": "^4.0.0",
+    "commander": "^14.0.0",
     "dotenv": "^17.2.1",
+    "jose": "^6.0.12",
     "mailersend": "^2.6.0",
     "nanostores": "^1.0.1",
     "reading-time": "^1.5.0",

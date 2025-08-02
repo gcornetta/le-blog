@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import VideoModal from '../ui/VideoModal.astro';
 import VideoPlayer from '../ui/VideoPlayer.astro';
-import { getFeaturedVideo, getLatestVideos } from '../../utils/videoMetadata.mjs';
+import { getFeaturedVideo, getLatestVideos } from '../../utils/content/videoMetadata.mjs';
 
 const featured = getFeaturedVideo();
 const latestVideos = getLatestVideos();

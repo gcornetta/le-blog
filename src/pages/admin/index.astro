@@ -1,0 +1,23 @@
+---
+// src/pages/admin/index.astro
+// The main admin login page.
+import AuthLayout from "../../layouts/AuthLayout.astro";
+import Login from "../../components/auth/Login.astro";
+
+// Import the session validation logic
+import { verifyToken, SESSION_COOKIE_NAME } from "../../utils/auth/auth.js";
+
+// Server-side check for an existing session
+const token = Astro.cookies.get(SESSION_COOKIE_NAME)?.value;
+const payload = await (token ? verifyToken(token) : null);
+
+// If a valid session exists, redirect to the dashboard
+if (payload) {
+  return Astro.redirect('/admin/dashboard');
+}
+
+// No valid session, show the login page
+---
+<AuthLayout title="Admin Login">
+  <Login />
+</AuthLayout>

@@ -1,0 +1,22 @@
+---
+// Destructure props with safe defaults
+const { title = 'Login', description = 'Login to your account.' } = Astro.props;
+import '../styles/global.css';
+---
+
+<html lang="en" class="scroll-smooth" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <!-- 
+    The body class centers the content both horizontally and vertically.
+    This is ideal for a login form.
+  -->
+  <body class="min-h-screen flex items-center justify-center bg-gray-100 text-base-content">
+    <!-- The slot will contain the login form component -->
+    <slot />
+  </body>
+</html>
