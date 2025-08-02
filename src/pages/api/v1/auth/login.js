@@ -1,6 +1,6 @@
 // src/pages/api/v1/auth/login.js
-import { authenticateAdmin } from '../../../../src/utils/auth/auth.js'; // adjust if your folder layout differs
-import { SESSION_COOKIE_NAME } from '../../../../src/utils/auth/auth.js';
+import { authenticateAdmin } from '../../../../utils/auth/auth.js'; // adjust if your folder layout differs
+import { SESSION_COOKIE_NAME } from '../../../../utils/auth/auth.js';
 
 /**
  * Parse duration strings like "2h", "30m", "45s" into seconds.
