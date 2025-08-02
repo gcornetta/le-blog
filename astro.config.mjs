@@ -14,10 +14,8 @@ export default defineConfig({
   integrations: [
     mdx(),
     alpine(),
-    // ← PostCSS + Tailwind + DaisyUI
-    tailwind(),
-    // ← auto sitemap.xml
-    sitemap(),
+    tailwind(),   // ← PostCSS + Tailwind + DaisyUI
+    sitemap(),    // ← auto sitemap.xml
     svelte({ 
       extensions: ['.svelte'] 
     }),
