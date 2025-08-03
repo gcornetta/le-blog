@@ -34,28 +34,33 @@ export default async function seed() {
 
   // --- Student User Seeding ---
   console.log("Seeding student users...");
-  const usersToInsert = [];
-  const existingUsers = await db.select().from(Users);
+  // Clear existing users to ensure a clean slate and all users have the correct domain.
+  await db.delete(Users);
+  console.log("Existing student users cleared.");
   
-  if (existingUsers.length < 10) {
-    const numToCreate = 10 - existingUsers.length;
-    for (let i = 0; i < numToCreate; i++) {
-      usersToInsert.push({
-        name: faker.person.fullName(),
-        email: faker.internet.email({ domain: 'usp.ceu.es' }),
-        registration_date: faker.date.past({ years: 1 }),
-        last_activity: faker.date.recent({ days: 30 }),
-      });
-    }
-    
-    if (usersToInsert.length > 0) {
-      await db.insert(Users).values(usersToInsert);
-      console.log(`Successfully seeded ${usersToInsert.length} new student users.`);
-    } else {
-      console.log('User table already contains 10 or more users; skipping student user seeding.');
-    }
+  const usersToInsert = [];
+  const numToCreate = 10;
+  for (let i = 0; i < numToCreate; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const fullName = `${firstName} ${lastName}`;
+    // Create an email from the name, converting to lowercase and replacing spaces/special characters
+    const emailName = faker.helpers.slugify(`${firstName}.${lastName}`).toLowerCase();
+
+    usersToInsert.push({
+      name: fullName,
+      // Manually construct the email address to ensure the correct domain and name part.
+      email: `${emailName}@usp.ceu.es`,
+      registration_date: faker.date.past({ years: 1 }),
+      last_activity: faker.date.recent({ days: 30 }),
+    });
+  }
+  
+  if (usersToInsert.length > 0) {
+    await db.insert(Users).values(usersToInsert);
+    console.log(`Successfully seeded ${usersToInsert.length} new student users with domain 'usp.ceu.es'.`);
   } else {
-    console.log('User table already contains 10 or more users; skipping student user seeding.');
+    console.log('No new student users to seed.');
   }
 
   // --- Course Seeding ---
