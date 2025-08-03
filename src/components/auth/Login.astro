@@ -92,6 +92,13 @@ const isBlocked = recentFailedAttempts.length >= 3;
                      class="input input-bordered w-full" x-model="password" required
                      :disabled="loading" />
             </div>
+            <div class="flex items-center justify-between mt-2">
+              <label class="label cursor-pointer gap-2">
+                <input type="checkbox" class="checkbox checkbox-xs" />
+                <span class="label-text text-primary">Stay signed in</span>
+              </label>
+              <a href="/forgot-password" class="text-primary text-sm hover:underline">Forgot password?</a>
+            </div>
             <div x-show="error" x-text="error" class="text-error text-sm mt-2"></div>
             <div class="form-control mt-6">
               <button type="submit" class="btn btn-primary w-full" :disabled="loading">
