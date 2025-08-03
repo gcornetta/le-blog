@@ -1,6 +1,7 @@
 ---
 // src/components/auth/Login.astro
 import { db, FailedLogins } from 'astro:db';
+import { eq, gte, and } from 'astro:db';
 import { SESSION_COOKIE_NAME } from '../../utils/auth/auth.js';
 
 // Session check
@@ -11,8 +12,10 @@ if (token) return Astro.redirect('/admin/dashboard');
 const ip = Astro.clientAddress || 'unknown';
 const recentFailedAttempts = await db.select()
   .from(FailedLogins)
-  .where('ip', '=', ip)
-  .where('attempt_time', '>=', new Date(Date.now() - 30 * 60 * 1000))
+  .where(and(
+    eq(FailedLogins.ip, ip),
+    gte(FailedLogins.attempt_time, new Date(Date.now() - 30 * 60 * 1000))
+  ))
   .limit(3);
 
 const isBlocked = recentFailedAttempts.length >= 3;
