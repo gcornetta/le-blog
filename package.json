@@ -19,6 +19,7 @@
     "@astrojs/db": "^0.16.0",
     "@astrojs/svelte": "^7.1.0",
     "@nanostores/persistent": "^1.1.0",
+    "@roxi/routify": "^3.5.2",
     "astro": "^5.12.8",
     "bcryptjs": "^3.0.2",
     "chalk": "^5.4.1",
