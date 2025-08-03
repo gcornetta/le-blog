@@ -21,8 +21,20 @@ const recentFailedAttempts = await db.select()
 const isBlocked = recentFailedAttempts.length >= 3;
 ---
 
-<div class="hero min-h-screen bg-base-200">
+<div class="hero min-h-screen bg-gradient-to-br from-base-300 via-primary/20 to-primary/40">
   <div class="hero-content flex-col">
+    <!-- Logo Container -->
+    <div class="mb-10 w-full flex justify-center">  <!-- Increased margin-bottom to mb-10 -->
+      <img 
+        src="/src/assets/logo.svg" 
+        alt="Learnelectronics" 
+        class="h-32 w-auto" 
+        width="auto"
+        height="128" 
+      />
+    </div>
+
+    <!-- Card Container -->
     <div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100 [perspective:1000px]"
          x-data="{
            email: '',
