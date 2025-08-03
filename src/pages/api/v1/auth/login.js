@@ -1,5 +1,5 @@
 // src/pages/api/v1/auth/login.js
-import { authenticateAdmin } from '../../../../utils/auth/auth.js'; // adjust if your folder layout differs
+import { authenticateAdmin } from '../../../../utils/auth/auth.js'; 
 import { SESSION_COOKIE_NAME } from '../../../../utils/auth/auth.js';
 
 /**

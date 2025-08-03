@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { db, Admins, FailedLogins } from 'astro:db';
+import { eq, gte, or, and } from 'astro:db';
 import { SignJWT, jwtVerify, base64url } from 'jose';
 
 export const SESSION_COOKIE_NAME = 'auth_session';
@@ -34,7 +35,7 @@ async function recordFailedLogin(email, ip) {
 
 async function clearFailedLogins(email, ip) {
   await db.delete(FailedLogins).where(
-    (q) => q.or(q.eq(FailedLogins.email, email), q.eq(FailedLogins.ip, ip))
+    or(eq(FailedLogins.email, email), eq(FailedLogins.ip, ip))
   );
 }
 
@@ -42,8 +43,10 @@ export async function authenticateAdmin(email, password, ip) {
   // Rate limiting by IP
   const recentByIp = await db.select()
     .from(FailedLogins)
-    .where('ip', '=', ip)
-    .where('attempt_time', '>=', new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000));
+    .where(and(
+      eq(FailedLogins.ip, ip),
+      gte(FailedLogins.attempt_time, new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000))
+    ));
   if (recentByIp.length >= MAX_FAILED_ATTEMPTS) {
     throw new Error('Too many failed attempts. Try again later.');
   }
@@ -51,7 +54,7 @@ export async function authenticateAdmin(email, password, ip) {
   // Lookup admin
   const [admin] = await db.select()
     .from(Admins)
-    .where('email', '=', email)
+    .where(eq(Admins.email, email))
     .limit(1);
   if (!admin) {
     await recordFailedLogin(null, ip);
