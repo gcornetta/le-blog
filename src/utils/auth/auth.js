@@ -30,13 +30,21 @@ try {
 }
 
 async function recordFailedLogin(email, ip) {
-  await db.insert(FailedLogins).values([{ email, ip }]);
+  try {
+    await db.insert(FailedLogins).values([{ email, ip }]);
+  } catch (err) {
+    console.error('FAILED to record login attempt:', err);
+  }
 }
 
 async function clearFailedLogins(email, ip) {
-  await db.delete(FailedLogins).where(
-    or(eq(FailedLogins.email, email), eq(FailedLogins.ip, ip))
-  );
+  try {
+    await db.delete(FailedLogins).where(
+      or(eq(FailedLogins.email, email), eq(FailedLogins.ip, ip))
+    );
+  } catch (err) {
+    console.error('FAILED to clear failed login attempts:', err);
+  }
 }
 
 export async function authenticateAdmin(email, password, ip) {
@@ -68,7 +76,7 @@ export async function authenticateAdmin(email, password, ip) {
     throw new Error('Invalid credentials');
   }
 
-  // Clear failed attempts (by email or IP)
+  // Clear failed attempts (by email or IP) since login was successful
   await clearFailedLogins(email, ip);
 
   // Create JWT

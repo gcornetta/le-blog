@@ -19,7 +19,9 @@ export default defineConfig({
     svelte({ 
       extensions: ['.svelte'] 
     }),
-    db(),
+    db({
+      adapter: { type: 'remote' }
+    }),
   ],
   output: 'server',
   adapter: cloudflare({

@@ -1,6 +1,3 @@
-Okay, here's the updated README.md file in a single markdown block, ready for you to copy and paste.
-
-````markdown
 # Astro Starter Kit: Basics
 
 ```sh

@@ -36,6 +36,7 @@
     "@astrojs/rss": "^4.0.12",
     "@astrojs/sitemap": "^3.4.2",
     "@astrojs/tailwind": "^6.0.2",
+    "@faker-js/faker": "^9.9.0",
     "@tailwindcss/typography": "^0.5.16",
     "daisyui": "^5.0.46",
     "tailwindcss": "^3.4.17"
