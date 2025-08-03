@@ -44,19 +44,18 @@ export async function POST({ request, cookies }) {
       result = await authenticateAdmin(email, password, ip);
     } catch (err) {
       const msg = (err.message || '').toLowerCase();
-      if (msg.includes('too many failed')) {
-        return new Response(
-          JSON.stringify({
-            error: 'Account temporarily locked due to too many failed attempts',
-          }),
-          {
-            status: 429,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
+      // The error message to the client should be generic to avoid leaking info.
+      const errorResponse = { error: 'Invalid credentials' };
+      let status = 401;
+
+      // Handle specific lockout messages for a more user-friendly experience
+      if (msg.includes('too many failed attempts') || msg.includes('temporarily locked')) {
+        errorResponse.error = 'Account temporarily locked due to too many failed attempts. Please try again later.';
+        status = 429;
       }
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-        status: 401,
+      
+      return new Response(JSON.stringify(errorResponse), {
+        status,
         headers: { 'Content-Type': 'application/json' },
       });
     }

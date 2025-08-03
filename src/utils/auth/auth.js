@@ -8,11 +8,14 @@ import { SignJWT, jwtVerify, base64url } from 'jose';
 export const SESSION_COOKIE_NAME = 'auth_session';
 
 // Security configuration
-const MAX_FAILED_ATTEMPTS = 3;
+const MAX_FAILED_ATTEMPTS_BY_IP = 5; // New: More specific rate limiting for IPs
+const MAX_FAILED_ATTEMPTS_BY_EMAIL = 3; // New: Account-specific rate limiting
 const LOCKOUT_MINUTES = 30;
 const JWT_ALGORITHM = 'HS256';
 const JWT_ISSUER = 'urn:blog-admin';
 const JWT_AUDIENCE = 'urn:blog-admin';
+// Hardcoded dummy hash for timing attacks. This must be a valid bcrypt hash.
+const DUMMY_HASH = '$2a$10$abcdefghijklmnopqrstuvwxABCDEFGHIJKLMNOPQRSTUVWXYZ123456'; 
 
 // Initialize JWT secret (try base64url decode, fallback to raw UTF-8)
 let jwtSecret;
@@ -29,9 +32,21 @@ try {
   throw new Error(`JWT config error: ${err.message}`);
 }
 
+/**
+ * A centralized function for logging security-relevant events.
+ * This can be easily extended to push logs to an external service like Sentry or Datadog.
+ * @param {string} type - The type of event (e.g., 'login_failed', 'login_success', 'account_locked').
+ * @param {object} details - A JSON object with relevant details.
+ */
+function logSecurityEvent(type, details) {
+  const timestamp = new Date().toISOString();
+  console.log(JSON.stringify({ timestamp, type, ...details }));
+}
+
 async function recordFailedLogin(email, ip) {
   try {
     await db.insert(FailedLogins).values([{ email, ip }]);
+    logSecurityEvent('login_failed', { email, ip });
   } catch (err) {
     console.error('FAILED to record login attempt:', err);
   }
@@ -42,21 +57,38 @@ async function clearFailedLogins(email, ip) {
     await db.delete(FailedLogins).where(
       or(eq(FailedLogins.email, email), eq(FailedLogins.ip, ip))
     );
+    logSecurityEvent('failed_attempts_cleared', { email, ip });
   } catch (err) {
     console.error('FAILED to clear failed login attempts:', err);
   }
 }
 
 export async function authenticateAdmin(email, password, ip) {
-  // Rate limiting by IP
+  const lockoutTime = new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000);
+
+  // Hybrid Rate Limiting: Check by IP and by Email
+  // Check for too many failed attempts from this IP
   const recentByIp = await db.select()
     .from(FailedLogins)
     .where(and(
       eq(FailedLogins.ip, ip),
-      gte(FailedLogins.attempt_time, new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000))
+      gte(FailedLogins.attempt_time, lockoutTime)
     ));
-  if (recentByIp.length >= MAX_FAILED_ATTEMPTS) {
+  if (recentByIp.length >= MAX_FAILED_ATTEMPTS_BY_IP) {
+    logSecurityEvent('account_locked_ip', { ip });
     throw new Error('Too many failed attempts. Try again later.');
+  }
+
+  // Check for too many failed attempts on this specific email
+  const recentByEmail = await db.select()
+    .from(FailedLogins)
+    .where(and(
+      eq(FailedLogins.email, email),
+      gte(FailedLogins.attempt_time, lockoutTime)
+    ));
+  if (recentByEmail.length >= MAX_FAILED_ATTEMPTS_BY_EMAIL) {
+    logSecurityEvent('account_locked_email', { email });
+    throw new Error('Account temporarily locked due to too many failed attempts');
   }
 
   // Lookup admin
@@ -64,15 +96,20 @@ export async function authenticateAdmin(email, password, ip) {
     .from(Admins)
     .where(eq(Admins.email, email))
     .limit(1);
-  if (!admin) {
-    await recordFailedLogin(null, ip);
-    throw new Error('Invalid credentials');
-  }
 
-  // Password verify
-  const passwordMatch = await bcrypt.compare(password, admin.password_hash);
-  if (!passwordMatch) {
-    await recordFailedLogin(email, ip);
+  // Time-Constant Authentication: Use a dummy hash if the user is not found
+  let passwordMatch = false;
+  if (admin) {
+    passwordMatch = await bcrypt.compare(password, admin.password_hash);
+  } else {
+    // This is the mitigation for timing attacks.
+    // A dummy hash is compared to a dummy password to ensure the operation takes a consistent amount of time.
+    await bcrypt.compare('dummy-password', DUMMY_HASH);
+  }
+  
+  if (!admin || !passwordMatch) {
+    // Record the failed attempt with the email if we know it, or null if the email was not found.
+    await recordFailedLogin(admin ? email : null, ip); 
     throw new Error('Invalid credentials');
   }
 
@@ -85,7 +122,22 @@ export async function authenticateAdmin(email, password, ip) {
     email: admin.email,
   });
 
+  logSecurityEvent('login_success', { id: admin.id, email, ip });
+
   return { token, admin };
+}
+
+// ... (other functions remain the same) ...
+
+async function createSessionToken(payload) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: JWT_ALGORITHM })
+    .setIssuedAt()
+    .setExpirationTime(process.env.JWT_EXPIRES_IN || '2h')
+    .setSubject(payload.id.toString())
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
+    .sign(jwtSecret);
 }
 
 export async function verifyToken(token) {
@@ -96,7 +148,7 @@ export async function verifyToken(token) {
     });
     return payload;
   } catch (err) {
-    console.error('JWT Error:', err.message);
+    logSecurityEvent('jwt_verification_failed', { error: err.message });
     throw new Error('Invalid token');
   }
 }
@@ -128,15 +180,4 @@ function getTokenFromRequest(request) {
     return cookies[SESSION_COOKIE_NAME];
   }
   return null;
-}
-
-async function createSessionToken(payload) {
-  return await new SignJWT(payload)
-    .setProtectedHeader({ alg: JWT_ALGORITHM })
-    .setIssuedAt()
-    .setExpirationTime(process.env.JWT_EXPIRES_IN || '2h')
-    .setSubject(payload.id.toString())
-    .setIssuer(JWT_ISSUER)
-    .setAudience(JWT_AUDIENCE)
-    .sign(jwtSecret);
 }
