@@ -32,8 +32,11 @@ const courses = getFeaturedCourses();
         </figure>
 
         <div class="card-body flex flex-col gap-3">
-          <h3 class="card-title text-xl line-clamp-2">{course.title}</h3>
-
+          <div class="flex items-center gap-1 flex-1 min-w-0">
+              <h3 class="card-title text-xl w-full">
+                <span class="truncate">{course.title}</span>
+              </h3>
+          </div>
           <div class="flex items-center justify-between text-sm text-base-content/70">
             <span class="badge badge-outline badge-info lowercase">{course.level}</span>
             <div class="flex items-center gap-1 italic" x-show="wideEnough">
