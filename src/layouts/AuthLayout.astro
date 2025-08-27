@@ -1,6 +1,9 @@
 ---
 // Destructure props with safe defaults
 const { title = 'Login', description = 'Login to your account.' } = Astro.props;
+import Header from '../components/content/Header.astro';  
+import Footer from '../components/content/Footer.astro'; 
+import BackToHome from '../components/ui/BackToHome.astro'; 
 import '../styles/global.css';
 ---
 
@@ -15,8 +18,15 @@ import '../styles/global.css';
     The body class centers the content both horizontally and vertically.
     This is ideal for a login form.
   -->
-  <body class="min-h-screen flex items-center justify-center bg-gray-100 text-base-content">
+  <body class="min-h-screen flex flex-col bg-base-100 text-base-content">  
+    <Header/>
     <!-- The slot will contain the login form component -->
     <slot />
+    <BackToHome/>
+    <Footer/>
   </body>
 </html>
+
+
+
+
