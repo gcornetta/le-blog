@@ -9,8 +9,19 @@ const courses = getFeaturedCourses();
   <h2 class="text-4xl font-semibold mb-8">Featured Courses</h2>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-    {courses.map((course) => (
-      <div class="card bg-base-100 border border-base-200 w-full rounded-box shadow-md hover:shadow-lg transition-shadow duration-300">
+{courses.map((course) => (
+      <div
+        class="card bg-base-100 border border-base-200 w-full rounded-box shadow-md hover:shadow-lg transition-shadow duration-300"
+        x-data="{ wideEnough: true }"
+        x-init="
+          wideEnough = $el.offsetWidth > 180;
+          new ResizeObserver(entries => {
+            for (const entry of entries) {
+              wideEnough = entry.contentRect.width > 300;
+            }
+          }).observe($el);
+        "
+      >
         <figure class="aspect-video overflow-hidden">
           <img
             src={course.image}
@@ -25,7 +36,7 @@ const courses = getFeaturedCourses();
 
           <div class="flex items-center justify-between text-sm text-base-content/70">
             <span class="badge badge-outline badge-info lowercase">{course.level}</span>
-            <div class="flex items-center gap-1 italic">
+            <div class="flex items-center gap-1 italic" x-show="wideEnough">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 65.403 65.402"
