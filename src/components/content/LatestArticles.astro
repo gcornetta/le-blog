@@ -16,7 +16,7 @@ const posts = (await getCollection('blog', ({ data }) => (
       {posts
         .slice(0, posts.length >= 6 ? 6 : posts.length <= 3 ? posts.length : 3)
         .map(post => (
-          <div class="fade-in-up">
+          <div class="fade-in-up h-full">
             <BlogCard post={post} />
           </div>
         ))}

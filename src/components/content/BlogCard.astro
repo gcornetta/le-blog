@@ -1,5 +1,6 @@
 ---
 // src/components/content/BlogCard.astro
+//card bg-base-100 border border-base-200 w-full rounded-box transition-shadow duration-300
 import { Image } from 'astro:assets';
 import { computePostMetadata } from '../../utils/content/postMetadata.mjs';
 
@@ -21,7 +22,7 @@ const formattedDate = pubDate.toLocaleDateString('en-US', {
 ---
 
 <div
-  class={`card bg-base-100 border border-base-200 w-full rounded-box transition-shadow duration-300 ${
+  class={`card bg-base-100 border border-base-200 flex flex-col h-full rounded-box transition-shadow duration-300 ${
     featured ? 'shadow-lg hover:shadow-xl' : 'shadow-md hover:shadow-lg'
   }`}
 >
@@ -38,7 +39,7 @@ const formattedDate = pubDate.toLocaleDateString('en-US', {
     </figure>
   )}
 
-  <div class="card-body flex flex-col gap-3">
+  <div class="card-body flex flex-col gap-3 flex-1">
     {tags?.length > 0 && (
       <div class="card-actions justify-start flex-wrap mb-1">
         {tags.slice(0, 3).map((tag) => (
