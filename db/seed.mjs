@@ -71,8 +71,9 @@ export default async function seed() {
       { id: 1, title: 'Circuit Theory', description: 'Understand the fundamentals of electric circuits.', created_at: faker.date.past({ months: 6 }) },
       { id: 2, title: 'Digital Electronics', description: 'Dive into logic gates, flip-flops, finite state machines.', created_at: faker.date.past({ months: 4 }) },
       { id: 3, title: 'Analog Electronics', description: 'Explore MOSFETs, opamps, and amplifiers.', created_at: faker.date.past({ months: 2 }) },
+      { id: 4, title: 'RF & Microwave Electronics', description: 'Analyze high-frequency circuit design principles.', created_at: faker.date.past({ months: 3 }) },
     ]);
-    console.log("Successfully seeded 3 courses.");
+    console.log("Successfully seeded 4 courses.");
   } else {
     console.log("Courses already exist; skipping course seeding.");
   }
