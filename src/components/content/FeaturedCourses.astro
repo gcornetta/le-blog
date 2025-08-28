@@ -1,8 +1,12 @@
 ---
 // src/components/content/FeaturedCourses.astro
-import { getFeaturedCourses } from '../../utils/content/courseMetadata.mjs';
+import { db, FeaturedCourses } from 'astro:db';
 
-const courses = getFeaturedCourses();
+const courses = await db
+  .select()
+  .from(FeaturedCourses)
+  .orderBy('featured_order', 'asc')
+  .limit(4);
 ---
 
 <section class="py-12">

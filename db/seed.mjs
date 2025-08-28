@@ -1,7 +1,7 @@
 // https://astro.build/db/seed.mjs
 
 import 'dotenv/config';
-import { db, Admins, Users, Courses, Engagement } from 'astro:db';
+import { db, Admins, Users, Courses, Engagement, FeaturedCourses, FeaturedVideo, LatestVideos } from 'astro:db';
 import { faker } from '@faker-js/faker';
 
 export default async function seed() {
@@ -78,10 +78,69 @@ export default async function seed() {
     console.log("Courses already exist; skipping course seeding.");
   }
 
+    // --- Featured Courses Seeding ---
+  console.log("Seeding featured courses...");
+  // Clear to keep it simple & idempotent in dev
+  await db.delete(FeaturedCourses);
+
+  // Try to link to Courses by title; if not found, leave course_id null
+  const courseByTitle = {};
+  const allCourses = await db.select().from(Courses);
+  for (const c of allCourses) courseByTitle[c.title] = c.id;
+
+  const featuredPayload = [
+    {
+      id: 1,
+      course_id: courseByTitle['Circuit Theory'] ?? null,
+      title: 'Circuit Theory',
+      level: 'beginner',
+      instructor: 'Dr. Gianluca Cornetta',
+      rating: 4.5,
+      excerpt: 'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
+      image: '/images/courses/circuit-theory.jpg',
+      featured_order: 1,
+    },
+    {
+      id: 2,
+      course_id: courseByTitle['Digital Electronics'] ?? null,
+      title: 'Digital Electronics',
+      level: 'intermediate',
+      instructor: 'Dr. Gianluca Cornetta',
+      rating: 4.2,
+      excerpt: 'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
+      image: '/images/courses/digital-electronics.jpg',
+      featured_order: 2,
+    },
+    {
+      id: 3,
+      course_id: courseByTitle['Analog Electronics'] ?? null,
+      title: 'Analog Electronics',
+      level: 'intermediate',
+      instructor: 'Dr. Gianluca Cornetta',
+      rating: 4.8,
+      excerpt: 'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
+      image: '/images/courses/analog-electronics.jpg',
+      featured_order: 3,
+    },
+    {
+      id: 4,
+      course_id: courseByTitle['RF & Microwave Electronics'] ?? null,
+      title: 'RF & Microwave Electronics',
+      level: 'advanced',
+      instructor: 'Dr. Gianluca Cornetta',
+      rating: 4.7,
+      excerpt: 'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
+      image: '/images/courses/rf-microwave.jpg',
+      featured_order: 4,
+    },
+  ];
+
+  await db.insert(FeaturedCourses).values(featuredPayload);
+  console.log("Successfully seeded featured courses.");
+
   // --- Engagement Seeding ---
   console.log("Seeding engagement data...");
   const allUsers = await db.select().from(Users);
-  const allCourses = await db.select().from(Courses);
   const engagementTypes = ['video_watch', 'material_download', 'quiz_completion'];
 
   // Seed some random engagement data for each user
@@ -109,6 +168,123 @@ export default async function seed() {
     }
   }
   console.log("Successfully seeded engagement data for users.");
+
+  // Featured Video (single row)
+  console.log("Seeding featured video…");
+  await db.delete(FeaturedVideo);
+  await db.insert(FeaturedVideo).values([
+    {
+      id: 1,
+      title: "Understanding GFET Design",
+      description:
+        "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
+      youtubeId: "bTqVqk7FSmY",
+    },
+  ]);
+  console.log("Featured video seeded.");
+
+  // Latest Videos (carousel)
+  console.log("Seeding latest videos…");
+  await db.delete(LatestVideos);
+  await db.insert(LatestVideos).values([
+    {
+      id: 1,
+      title: "GFET Layout Optimization",
+      thumbnail: "layout-opt",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "12:34",
+      date: new Date("2025-07-20"),
+    },
+    {
+      id: 2,
+      title: "Compact Model Extraction",
+      thumbnail: "compact-model",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "9:02",
+      date: new Date("2025-07-18"),
+    },
+    {
+      id: 3,
+      title: "AI-assisted Circuit Design",
+      thumbnail: "ai-circuit",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "14:58",
+      date: new Date("2025-07-15"),
+    },
+    {
+      id: 4,
+      title: "Charge Pump Simulation",
+      thumbnail: "charge-pump",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "11:21",
+      date: new Date("2025-07-14"),
+    },
+    {
+      id: 5,
+      title: "Intro to Metasurface Design",
+      thumbnail: "metasurface",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "13:45",
+      date: new Date("2025-07-13"),
+    },
+    {
+      id: 6,
+      title: "Rectenna Matching Networks",
+      thumbnail: "rectenna",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "10:50",
+      date: new Date("2025-07-11"),
+    },
+    {
+      id: 7,
+      title: "ML for GFET Optimization",
+      thumbnail: "ml-optimization",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "15:12",
+      date: new Date("2025-07-09"),
+    },
+    {
+      id: 8,
+      title: "DRC and LVS Basics",
+      thumbnail: "drc-lvs",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "8:59",
+      date: new Date("2025-07-07"),
+    },
+    {
+      id: 9,
+      title: "GFET Layout from Scratch",
+      thumbnail: "layout-from-scratch",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "16:04",
+      date: new Date("2025-07-05"),
+    },
+    {
+      id: 10,
+      title: "Capacitor Modeling Deep Dive",
+      thumbnail: "capacitor-model",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "10:30",
+      date: new Date("2025-07-03"),
+    },
+    {
+      id: 11,
+      title: "Energy Scavenging Circuits",
+      thumbnail: "energy-scavenging",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "14:11",
+      date: new Date("2025-07-01"),
+    },
+    {
+      id: 12,
+      title: "Graphene Bandgap Engineering",
+      thumbnail: "graphene-bandgap",
+      youtubeId: "bTqVqk7FSmY",
+      duration: "9:47",
+      date: new Date("2025-06-28"),
+    },
+  ]);
+  console.log("Latest videos seeded.");
 
   console.log("✅ Seed script finished.");
 }

@@ -2,10 +2,26 @@
 import { Image } from 'astro:assets';
 import VideoModal from '../ui/VideoModal.astro';
 import VideoPlayer from '../ui/VideoPlayer.astro';
-import { getFeaturedVideo, getLatestVideos } from '../../utils/content/videoMetadata.mjs';
+import { db, FeaturedVideo, LatestVideos } from 'astro:db';
+import thumbnails from '../../assets/thumbnailMap.mjs';
 
-const featured = getFeaturedVideo();
-const latestVideos = getLatestVideos();
+// Featured video
+const featured = ( await db
+  .select()
+  .from(FeaturedVideo)
+  .orderBy('created_at', 'desc')
+  .limit(1)
+)[0];
+
+// Latest videos for carousel (newest first)
+const latestVideosRaw = await db
+  .select()
+  .from(LatestVideos)
+  .orderBy('date', 'desc')
+  .limit(12);
+
+const latestVideos = latestVideosRaw
+  .map(v => ({ ...v, thumbnail: thumbnails[v.thumbnail] }));
 ---
 
 <section class="py-12 space-y-16">

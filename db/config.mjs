@@ -103,6 +103,49 @@ const BlockedIPs = defineTable({
   },
 });
 
+/** FeaturedCourses table (normalized for your UI needs) */
+const FeaturedCourses = defineTable({
+  name: 'featured_courses',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    // Optional reference to an existing course
+    course_id: column.number({ references: () => Courses.columns.id, optional: true }),
+    title: column.text(),         // duplicate title for quick rendering / future decoupling
+    level: column.text(),         // 'beginner' | 'intermediate' | 'advanced'
+    instructor: column.text(),
+    rating: column.number(),      // supports floats (e.g., 4.5)
+    excerpt: column.text(),
+    image: column.text(),         // path like '/images/courses/...'
+    featured_order: column.number({ default: 0 }),
+    created_at: column.date({ default: NOW }),
+  },
+});
+
+// Single featured video (one row expected)
+const FeaturedVideo = defineTable({
+  name: 'featured_video',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    title: column.text(),
+    description: column.text(),
+    youtubeId: column.text(),
+  },
+});
+
+// Latest videos list (carousel entries)
+const LatestVideos = defineTable({
+  name: 'latest_videos',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    title: column.text(),
+    thumbnail: column.text(),          // store the path (e.g. /images/videos/xxx.webp or .jpg)
+    youtubeId: column.text(),
+    duration: column.text(),           // keep as text "mm:ss"
+    date: column.date(),               // ISO in seed; rendered as yyyy-mm-dd in UI
+    created_at: column.date({ default: NOW }),
+  },
+});
+
 export default defineDb({
   tables: {
     Admins,
@@ -113,5 +156,8 @@ export default defineDb({
     UnregisteredActivity,
     Engagement,
     BlockedIPs,
+    FeaturedCourses,
+    FeaturedVideo,
+    LatestVideos,
   },
 });
