@@ -21,13 +21,18 @@ const menuItems = items.length ? items : defaults;
   @keydown.escape.window="close()"
   x-cloak
 >
-  <!-- Menu items stack -->
-  <div class="absolute bottom-16 right-0 flex flex-col items-end space-y-3"
-       x-show="open"
-       x-transition.opacity
-       x-transition.duration.300ms>
+  <!-- Stack anchored above FAB; always mounted to avoid reflow -->
+  <div
+    class="absolute bottom-16 right-0 flex flex-col items-end gap-3"
+    :class="open ? 'pointer-events-auto' : 'pointer-events-none'"
+    aria-hidden="true"
+  >
     {menuItems.map((item, idx) => (
-      <div class="flex items-center gap-3" style={`transition-delay:${idx * 40}ms`} x-transition>
+      <div
+        class="flex items-center gap-3 transform-gpu will-change-transform transition duration-300 ease-out"
+        :class="open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'"
+        style={`transition-delay:${idx * 60}ms`}
+      >
         <!-- Label -->
         <span class="px-3 py-1 rounded-xl bg-base-100 text-base-content shadow border text-sm select-none">
           {item.label}
@@ -35,19 +40,23 @@ const menuItems = items.length ? items : defaults;
 
         <!-- Action -->
         {item.action === 'scrollTop' ? (
-          <button type="button"
-            class="btn btn-primary btn-circle shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition-all duration-300 ease-out"
+          <button
+            type="button"
+            class="btn btn-primary btn-circle shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition-transform duration-300 ease-out"
             @click="scrollTop(); close()"
-            aria-label={item.label}>
+            aria-label={item.label}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
             </svg>
           </button>
         ) : item.href ? (
-          <a href={item.href}
-            class="btn btn-primary btn-circle shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition-all duration-300 ease-out"
+          <a
+            href={item.href}
+            class="btn btn-primary btn-circle shadow-lg shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition-transform duration-300 ease-out"
             @click="close()"
-            aria-label={item.label}>
+            aria-label={item.label}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v10h14V10" />
             </svg>
@@ -57,14 +66,16 @@ const menuItems = items.length ? items : defaults;
     ))}
   </div>
 
-  <!-- Main FAB -->
+  <!-- Main FAB (fixed) -->
   <button
     type="button"
     class="btn btn-primary btn-circle shadow-xl shadow-black/40 border border-black/20 ring-2 ring-black/10 hover:ring-black/20 transition-transform duration-300 ease-out"
     :class="open ? 'rotate-45' : 'rotate-0'"
     @click="toggle()"
     aria-label="Toggle quick menu"
+    :aria-expanded="open.toString()"
   >
+    <!-- + rotates 45° → × -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14" />
     </svg>
