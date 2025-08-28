@@ -14,7 +14,7 @@ const posts = (await getCollection('blog', ({ data }) => (
     <h2 class="text-4xl font-semibold mb-8">Latest Articles</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {posts
-        .slice(0, posts.length >= 6 ? 6 : posts.length <= 3 ? posts.length : 3)
+        .slice(0, posts.length >= 6 ? 6 : Math.min(3, posts.length))
         .map(post => (
           <div class="fade-in-up h-full">
             <BlogCard post={post} />
