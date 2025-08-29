@@ -1,6 +1,8 @@
 ---
+// src/pages/blog.astro
 import BlogLayout from '../layouts/BlogLayout.astro';
 import MainPostCard from '../components/content/MainPostCard.astro';
+import BlogSearch from '../components/search/BlogSearch.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('blog', ({ data }) => (
@@ -9,8 +11,25 @@ const posts = (await getCollection('blog', ({ data }) => (
 
 const mainPost =
   posts.find((p) => p.data?.main === true || p.data?.main === "true") ??
-  posts[0]; // optional fallback
+  posts[0];
 ---
 <BlogLayout title="Learnelectronics Blog" description="Latest articles and updates">
-  {mainPost && <MainPostCard post={mainPost} />}
+  <section class="not-prose">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+
+      <!-- Search: on top by default, right column on lg+ -->
+      <aside class="order-1 lg:order-2 lg:col-span-1">
+        <div class="lg:sticky top-24">
+          <BlogSearch />
+        </div>
+      </aside>
+
+      <!-- Main post: below on mobile, spans 3 columns on lg+ -->
+      <div class="order-2 lg:order-1 lg:col-span-3">
+        {mainPost && <MainPostCard post={mainPost} />}
+      </div>
+
+    </div>
+  </section>
 </BlogLayout>
+
