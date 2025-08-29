@@ -1,11 +1,13 @@
 ---
 title: "The Search for Exoplanets"
 pubDate: 2023-09-22
+main: false
 featured: true
 description: "How astronomers discover planets around other stars"
 tags: ["exoplanets", "research", "space-telescopes"]
 author: "Prof. Michael Chen"
-heroImage: ../../assets/images/blog/hero.jpg
+avatarImage: ../../assets/images/authors/gcornetta.png
+heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
 
 ## Introduction

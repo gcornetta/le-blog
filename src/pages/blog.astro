@@ -1,0 +1,15 @@
+---
+import BlogLayout from '../layouts/BlogLayout.astro';
+import MainPostCard from '../components/content/MainPostCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => (
+  import.meta.env.PROD ? !data.draft : true
+))).sort((a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate));
+
+const mainPost =
+  posts.find((p) => p.data?.main === true || p.data?.main === "true") ??
+  posts[0]; // optional fallback
+---
+
+{mainPost && <MainPostCard post={mainPost} />}

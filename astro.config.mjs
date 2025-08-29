@@ -1,4 +1,6 @@
 import { defineConfig } from 'astro/config';
+import { fileURLToPath } from 'url';
+
 import mdx       from '@astrojs/mdx';
 import alpine    from '@astrojs/alpinejs';
 import tailwind  from '@astrojs/tailwind';

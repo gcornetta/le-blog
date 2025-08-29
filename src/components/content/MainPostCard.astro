@@ -1,0 +1,193 @@
+---
+/**
+ * MainPostCard.astro
+ * Large DaisyUI card for the main blog post.
+ */
+
+import { Image } from "astro:assets";
+import { computePostMetadata } from "../../utils/content/postMetadata.mjs";
+
+const { post } = Astro.props;
+
+// Normalize frontmatter
+const fm = "data" in post ? post.data : post;
+const slug = post.slug;
+
+// <Image> accepts ImageMetadata or remote URL (no local string paths)
+const hero =
+  (typeof fm.heroImage === "object" && fm.heroImage?.src ? fm.heroImage : undefined) ||
+  (typeof fm.heroImage === "string" && /^https?:\/\//i.test(fm.heroImage) ? fm.heroImage : undefined);
+
+const avatar =
+  (typeof fm.avatarImage === "object" && fm.avatarImage?.src ? fm.avatarImage : undefined) ||
+  (typeof fm.avatarImage === "string" && /^https?:\/\//i.test(fm.avatarImage) ? fm.avatarImage : undefined);
+
+// Post meta
+const { readingTime, excerpt } = computePostMetadata(post.body ?? "");
+
+// Date formatting
+const dateObj = new Date(fm.pubDate);
+const formattedDate = isNaN(dateObj.getTime())
+  ? String(fm.pubDate)
+  : dateObj.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+const dateISO = isNaN(dateObj.getTime()) ? undefined : dateObj.toISOString();
+---
+
+<article
+  class="group card md:card-side md:items-stretch bg-base-100 border border-base-200/60 rounded-3xl
+         shadow-xl hover:shadow-2xl transform-gpu hover:-translate-y-1
+         transition-all duration-300 ease-out overflow-hidden"
+>
+  <!-- Hero: always 16:9, padded; 50% width on md+ -->
+  <figure class="md:w-1/2">
+    <div class="p-3 sm:p-4 md:p-6">
+      {hero && (
+        <div class="hero-box relative aspect-[16/9] overflow-hidden rounded-2xl">
+          <Image
+            src={hero}
+            alt={fm.title}
+            class="block transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+            sizes="(min-width:768px) 50vw, 100vw"
+            widths={[480, 768, 1024, 1280, 1536]}
+          />
+        </div>
+      )}
+    </div>
+  </figure>
+
+  <!-- Content -->
+  <div class="card-body md:w-1/2 gap-3 md:gap-2 p-6 bg-base-100">
+    <!-- Tags -->
+    {fm.tags?.length ? (
+      <div class="flex flex-wrap gap-2">
+        {fm.tags.map((tag) => (
+          <a href={`/tags/${encodeURIComponent(tag)}`} class="badge badge-outline" aria-label={`Tag ${tag}`}>
+            {tag}
+          </a>
+        ))}
+      </div>
+    ) : null}
+
+    <!-- Title (smoothly scales; clamp to 1 line on md+) -->
+    <h2
+      class="card-title leading-tight tracking-tight text-balance
+             text-[clamp(1.125rem,2.5vw+0.5rem,1.75rem)]
+             md:text-[clamp(1.25rem,1.5vw+0.75rem,2rem)]
+             lg:text-[clamp(1.35rem,1.2vw+0.9rem,2.25rem)]
+             md:line-clamp-1"
+    >
+      <a href={`/blog/${slug}`} class="link link-hover">{fm.title}</a>
+    </h2>
+
+    <!-- Metadata: avatar (never clipped) + single-line text row (author • date • RT if fits) -->
+    <div class="flex items-center gap-3 text-sm text-base-content/70">
+      <!-- Avatar OUTSIDE overflow-hidden -->
+      <div class="shrink-0">
+        <div class="w-10 h-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-100 bg-base-100 p-0.5">
+          {avatar && (
+            <Image
+              src={avatar}
+              alt={fm.author}
+              width={40}
+              height={40}
+              loading="lazy"
+              decoding="async"
+              class="w-full h-full rounded-full object-contain"
+            />
+          )}
+        </div>
+      </div>
+
+      <!-- Text row we measure for overflow -->
+      <div
+        x-data="{
+          showRT: false,
+          measure() {
+            const row = this.$refs.row, rt = this.$refs.rt;
+            if (!row || !rt) return;
+            // include RT but keep invisible for accurate measurement
+            rt.classList.remove('hidden'); rt.classList.add('invisible');
+            this.$nextTick(() => {
+              const fits = row.scrollWidth <= row.clientWidth;
+              this.showRT = fits;
+              rt.classList.toggle('hidden', !fits);
+              rt.classList.remove('invisible');
+            });
+          },
+          hideThenMeasure() {
+            this.showRT = false;
+            this.$refs.rt?.classList.add('hidden');
+            requestAnimationFrame(() => this.measure());
+          }
+        }"
+        x-init="
+          hideThenMeasure();
+          const ro = new ResizeObserver(() => hideThenMeasure());
+          ro.observe($refs.row);
+          window.addEventListener('resize', hideThenMeasure);
+        "
+        x-ref="row"
+        class="flex items-center gap-3 flex-nowrap overflow-hidden min-w-0 w-full"
+      >
+        <span class="whitespace-nowrap shrink-0">
+          By <span class="font-medium">{fm.author}</span>
+        </span>
+
+        <span class="flex items-center gap-1 whitespace-nowrap shrink-0">
+          <!-- Calendar icon -->
+          <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {dateISO ? <time datetime={dateISO}>{formattedDate}</time> : <span>{formattedDate}</span>}
+        </span>
+
+        <!-- Reading time (only if it fully fits) -->
+        <span x-ref="rt" x-show="showRT" class="flex items-center gap-1 whitespace-nowrap shrink-0 hidden">
+          <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 6v6l4 2m4-2a8 8 0 11-8-8 8 8 0 018 8z" />
+          </svg>
+          <span>{readingTime}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Excerpt with quote icon -->
+    <div class="relative border-l-4 border-primary pl-4 text-sm text-base-content/80 italic">
+      <div class="flex gap-2 items-start">
+        <svg class="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M7 10.4142L2.70711 14.7071L1.29289 13.2929L5 9.58579V9L1 9V2H7V10.4142Z"/>
+          <path d="M9 9L13 9V9.58579L9.29289 13.2929L10.7071 14.7071L15 10.4142L15 2H9L9 9Z"/>
+        </svg>
+        <p class="line-clamp-3">{excerpt}</p>
+      </div>
+    </div>
+
+<!-- CTA -->
+<div class="mt-auto pt-2 border-t border-base-200 text-sm flex justify-end items-center">
+  <div class="card-actions justify-end">
+    <a
+      href={`/blog/${slug}`}
+      class="btn btn-ghost normal-case text-[0.91rem] md:text-[1.01rem] font-medium leading-tight px-3 md:px-4 py-2 gap-1"
+    >
+      Read More
+      <svg xmlns="http://www.w3.org/2000/svg" class="ml-1 h-[15px] w-[15px] md:h-4 md:w-4" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>
+
+
+  </div>
+</article>
+
+<style>
+  /* Make the <picture> generated by astro:assets fill the 16:9 box */
+  .hero-box picture { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero-box img     { width: 100%; height: 100%; object-fit: cover; }
+</style>

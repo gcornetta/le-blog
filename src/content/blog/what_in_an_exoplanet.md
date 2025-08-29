@@ -1,11 +1,13 @@
 ---
 title: "What is an Exoplanet"
 pubDate: 2022-09-22
+main: false
 featured: false
 description: "How astronomers discover planets around other stars"
 tags: ["exoplanets", "space-telescopes"]
 author: "Prof. Lily Chen"
-heroImage: ../../assets/images/blog/hero.jpg
+avatarImage: ../../assets/images/authors/gcornetta.png
+heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
 
 ## Introduction

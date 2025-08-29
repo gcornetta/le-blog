@@ -1,11 +1,11 @@
 ---
-title: "Exploring the Orion Nebula"
+title: "The Orion Nebula Once Again"
 pubDate: 2023-10-15
-main: false
-featured: true
-description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth"
+main: true
+featured: false
+description: "Another deep dive into one of the most spectacular deep-sky objects visible from Earth"
 tags: ["astrophotography", "nebulae", "beginner"]
-author: "Dr. Sarah Johnson"
+author: "Dr. Gianluca Cornetta"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
