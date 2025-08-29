@@ -1,40 +1,55 @@
 ---
+// src/layouts/BlogLayout.astro
 import Header from '../components/content/Header.astro'
 import Footer from '../components/content/Footer.astro'
 
-const { frontmatter } = Astro.props
----
+// In layouts, Markdown frontmatter is passed as top-level props.
+const {
+  title = 'Untitled',
+  description = '',
+  pubDate,
+  tags = []
+} = Astro.props
 
+const formattedDate = pubDate
+  ? new Date(pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  : null
+
+// ✅ Boolean guard: prevents rendering numeric 0
+const hasMeta = Boolean(formattedDate) || (Array.isArray(tags) && tags.length > 0)
+---
 <html lang="en" class="scroll-smooth">
-<head>
-  <title>{frontmatter.title} | Space Explorer</title>
-  <meta name="description" content={frontmatter.description} />
-</head>
-<body class="min-h-screen flex flex-col bg-base-100 text-base-content">
-  <Header />
-  
-  <main class="flex-grow container mx-auto px-4 py-8">
-    <article class="prose lg:prose-xl dark:prose-invert max-w-none">
-      <h1 class="text-4xl font-bold mb-2">{frontmatter.title}</h1>
-      <div class="flex items-center gap-4 mb-8">
-        <span class="text-sm opacity-75">
-          {new Date(frontmatter.pubDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </span>
-        <div class="flex gap-2">
-          {frontmatter.tags.map(tag => (
-            <span class="badge badge-outline">{tag}</span>
-          ))}
-        </div>
-      </div>
-      <slot />
-    </article>
-  </main>
-  
-  <Footer />
-</body>
+  <head>
+    <title>{title} | Space Explorer</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body class="min-h-screen flex flex-col bg-base-100 text-base-content">
+    <Header />
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+      <article class="prose lg:prose-xl dark:prose-invert max-w-none">
+        <h1 class="text-4xl font-bold mb-2">{title}</h1>
+
+        {hasMeta && (
+          <div class="flex flex-wrap items-center gap-4 mb-8">
+            {formattedDate && (
+              <span class="text-sm opacity-75">{formattedDate}</span>
+            )}
+            {Array.isArray(tags) && tags.length > 0 && (
+              <div class="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span class="badge badge-outline">{tag}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <slot />
+      </article>
+    </main>
+
+    <Footer />
+  </body>
 </html>
 

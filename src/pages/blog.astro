@@ -11,5 +11,6 @@ const mainPost =
   posts.find((p) => p.data?.main === true || p.data?.main === "true") ??
   posts[0]; // optional fallback
 ---
-
-{mainPost && <MainPostCard post={mainPost} />}
+<BlogLayout title="Learnelectronics Blog" description="Latest articles and updates">
+  {mainPost && <MainPostCard post={mainPost} />}
+</BlogLayout>
