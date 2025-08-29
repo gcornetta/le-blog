@@ -81,9 +81,9 @@ const dateISO = isNaN(dateObj.getTime()) ? undefined : dateObj.toISOString();
       <a href={`/blog/${slug}`} class="link link-hover">{fm.title}</a>
     </h2>
 
-    <!-- Metadata: avatar (never clipped) + single-line text row (author • date • RT if fits) -->
+        <!-- Metadata: avatar + single-line text row (author + date + RT only if both fit) -->
     <div class="flex items-center gap-3 text-sm text-base-content/70">
-      <!-- Avatar OUTSIDE overflow-hidden -->
+      <!-- Avatar (never clipped) -->
       <div class="shrink-0">
         <div class="w-10 h-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-100 bg-base-100 p-0.5">
           {avatar && (
@@ -100,24 +100,28 @@ const dateISO = isNaN(dateObj.getTime()) ? undefined : dateObj.toISOString();
         </div>
       </div>
 
-      <!-- Text row we measure for overflow -->
+      <!-- Row: show date+RT only if both fit -->
       <div
         x-data="{
-          showRT: false,
-          measure() {
-            const row = this.$refs.row, rt = this.$refs.rt;
-            if (!row || !rt) return;
-            // include RT but keep invisible for accurate measurement
-            rt.classList.remove('hidden'); rt.classList.add('invisible');
+          showMeta: false,
+          _ensureVisible(el){ if(!el) return; el.classList.remove('hidden'); el.classList.add('invisible'); },
+          _apply(el, on){ if(!el) return; el.classList.toggle('hidden', !on); el.classList.remove('invisible'); },
+          measure(){
+            const row = this.$refs.row, date = this.$refs.date, rt = this.$refs.rt;
+            if (!row) return;
+            // Make meta take space for accurate measurement
+            this._ensureVisible(date);
+            this._ensureVisible(rt);
             this.$nextTick(() => {
               const fits = row.scrollWidth <= row.clientWidth;
-              this.showRT = fits;
-              rt.classList.toggle('hidden', !fits);
-              rt.classList.remove('invisible');
+              this.showMeta = !!fits;               // both or none
+              this._apply(date, this.showMeta);
+              this._apply(rt, this.showMeta && !!rt);
             });
           },
-          hideThenMeasure() {
-            this.showRT = false;
+          hideThenMeasure(){
+            this.showMeta = false;
+            this.$refs.date?.classList.add('hidden');
             this.$refs.rt?.classList.add('hidden');
             requestAnimationFrame(() => this.measure());
           }
@@ -135,25 +139,28 @@ const dateISO = isNaN(dateObj.getTime()) ? undefined : dateObj.toISOString();
           By <span class="font-medium">{fm.author}</span>
         </span>
 
-        <span class="flex items-center gap-1 whitespace-nowrap shrink-0">
-          <!-- Calendar icon -->
-          <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <!-- Date (hidden unless both date and RT fit) -->
+        <span x-ref="date" class="flex items-center gap-1 whitespace-nowrap shrink-0 hidden">
+          <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           {dateISO ? <time datetime={dateISO}>{formattedDate}</time> : <span>{formattedDate}</span>}
         </span>
 
-        <!-- Reading time (only if it fully fits) -->
-        <span x-ref="rt" x-show="showRT" class="flex items-center gap-1 whitespace-nowrap shrink-0 hidden">
-          <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M12 6v6l4 2m4-2a8 8 0 11-8-8 8 8 0 018 8z" />
-          </svg>
-          <span>{readingTime}</span>
-        </span>
+        <!-- Reading time (hidden unless both date and RT fit) -->
+        {readingTime && (
+          <span x-ref="rt" class="flex items-center gap-1 whitespace-nowrap shrink-0 hidden">
+            <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6v6l4 2m4-2a8 8 0 11-8-8 8 8 0 018 8z" />
+            </svg>
+            <span>{readingTime}</span>
+          </span>
+        )}
       </div>
     </div>
+
 
     <!-- Excerpt with quote icon -->
     <div class="relative border-l-4 border-primary pl-4 text-sm text-base-content/80 italic">

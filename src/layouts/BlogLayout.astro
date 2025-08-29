@@ -3,6 +3,8 @@
 import Header from '../components/content/Header.astro'
 import Footer from '../components/content/Footer.astro'
 
+import '../styles/global.css';  
+
 // In layouts, Markdown frontmatter is passed as top-level props.
 const {
   title = 'Untitled',
@@ -17,6 +19,19 @@ const formattedDate = pubDate
 
 // ✅ Boolean guard: prevents rendering numeric 0
 const hasMeta = Boolean(formattedDate) || (Array.isArray(tags) && tags.length > 0)
+
+// Brand-styling helper: Learn + e + lectronics → wrap the “e”
+function styleBrandInTitle(t) {
+  if (typeof t !== 'string') return null
+  // Case-sensitive; add /i for case-insensitive
+  const html = t.replace(
+    /Learn(e)lectronics/g,
+    'Learn<span class="inline-block mr-[0.1rem] ml-[0.1rem] text-red-500" style="transform: rotate(-15deg);">e</span>lectronics'
+  )
+  return html === t ? null : html
+}
+
+const styledTitleHTML = styleBrandInTitle(title)
 ---
 <html lang="en" class="scroll-smooth">
   <head>
@@ -27,26 +42,30 @@ const hasMeta = Boolean(formattedDate) || (Array.isArray(tags) && tags.length > 
     <Header />
 
     <main class="flex-grow container mx-auto px-4 py-8">
-      <article class="prose lg:prose-xl dark:prose-invert max-w-none">
-        <h1 class="text-4xl font-bold mb-2">{title}</h1>
-
-        {hasMeta && (
-          <div class="flex flex-wrap items-center gap-4 mb-8">
-            {formattedDate && (
-              <span class="text-sm opacity-75">{formattedDate}</span>
+        <article class="prose lg:prose-xl dark:prose-invert max-w-none">
+          <header class="mb-8 md:mb-12">
+            {styledTitleHTML ? (
+              <h1 class="text-4xl font-bold text-center mb-3 md:mb-4" set:html={styledTitleHTML} />
+            ) : (
+              <h1 class="text-4xl font-bold text-center mb-3 md:mb-4">{title}</h1>
             )}
-            {Array.isArray(tags) && tags.length > 0 && (
-              <div class="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span class="badge badge-outline">{tag}</span>
-                ))}
+
+            {hasMeta && (
+              <div class="flex flex-wrap items-center gap-4 justify-center w-full text-center">
+                {formattedDate && <span class="text-sm opacity-75">{formattedDate}</span>}
+                {Array.isArray(tags) && tags.length > 0 && (
+                  <div class="flex flex-wrap gap-2 justify-center">
+                    {tags.map((tag) => (
+                      <span class="badge badge-outline">{tag}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
+          </header>
 
-        <slot />
-      </article>
+          <slot />
+        </article>
     </main>
 
     <Footer />

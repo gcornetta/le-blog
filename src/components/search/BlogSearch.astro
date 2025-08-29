@@ -1,86 +1,62 @@
 ---
-/**
- * BlogSearch.astro
- * A DaisyUI search box with a magnifying glass icon and Alpine.js-powered live results.
- *
- * Props:
- *  - apiPath?: string  (default: '/api/v1/search/blog')
- *  - placeholder?: string (default: 'Search articles...')
- *  - limit?: number (client-side display limit; default 10)
- */
-const {
-  apiPath = '/api/v1/search/blog-search',
-  placeholder = 'Search articles...',
-  limit = 10,
-} = Astro.props;
+const { apiPath = '/api/v1/search/search-blog' } = Astro.props;
 ---
 <style is:global>
-  /* Prevent FOUC for Alpine-managed panels */
-  [x-cloak] { display: none !important; }
+  [x-cloak]{display:none!important}
 </style>
 
 <div
-  x-data="blogSearchComponent({ apiPath: '{{apiPath}}', limit: {{limit}} })"
+  x-data="blogSearchComponent()"
+  x-init="init($el)"
+  data-api={apiPath}
   @keydown.escape="close()"
   class="relative w-full max-w-2xl"
 >
-  <!-- Input with left icon and clear button -->
-  <label class="input input-bordered w-full flex items-center gap-2 pr-10 pl-10">
-    <!-- Magnifying glass icon (left) -->
-    <svg class="w-5 h-5 opacity-60 pointer-events-none absolute left-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round"
-        d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
-    </svg>
+  <form @submit.prevent="goToFirst()" class="relative">
+    <label class="input input-bordered w-full flex items-center gap-2 pr-10 pl-10">
+      <svg class="w-5 h-5 opacity-60 pointer-events-none absolute left-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"/>
+      </svg>
 
-    <input
-      type="search"
-      class="grow bg-transparent outline-none"
-      :value="q"
-      @input.debounce.250ms="q = $event.target.value; search()"
-      @focus="open = true; if (results.length === 0) search()"
-      :placeholder="placeholder"
-      aria-label="Search blog articles"
-    />
+      <input
+        type="text"
+        class="grow bg-transparent outline-none"
+        x-model="q"
+        @focus="open = true"
+        placeholder="Search articles..."
+        aria-label="Search blog articles"
+        autocomplete="off"
+      />
 
-    <!-- Clear button (right) -->
-    <button
-      class="btn btn-ghost btn-xs absolute right-2"
-      type="button"
-      x-show="q.length"
-      @click="clear()"
-      aria-label="Clear search"
-    >
-      ✕
-    </button>
+      <button class="btn btn-circle btn-ghost btn-xs absolute right-2" type="button" x-show="q.length" @click="clear()" aria-label="Clear search">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
 
-    <!-- Spinner (right) -->
-    <svg x-show="loading" class="animate-spin absolute right-12 w-5 h-5 opacity-60" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity=".25"></circle>
-      <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"></path>
-    </svg>
-  </label>
+      <svg x-show="loading" class="animate-spin absolute right-12 w-5 h-5 opacity-60" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity=".25"></circle>
+        <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"></path>
+      </svg>
+    </label>
+  </form>
 
-  <!-- Results panel -->
   <div
     x-cloak
     x-show="open"
-    @click.outside="close()"
+    @click.away="close()"
     class="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-base-200 bg-base-100 shadow-xl"
   >
-    <template x-if="!loading && results.length === 0 && q.length > 0">
-      <div class="p-4 text-sm text-base-content/70">No matches for “<span x-text="q"></span>”.</div>
-    </template>
+    <div x-show="!loading && results.length === 0 && q.length > 0" class="p-4 text-sm text-base-content/70">
+      No matches for <span class="font-medium" x-text="q"></span>.
+    </div>
 
-    <ul class="menu menu-sm">
+    <ul class="menu menu-sm" x-show="results.length > 0">
       <template x-for="item in results.slice(0, limit)" :key="item.slug">
         <li>
-          <a
-            class="py-3 px-4 flex items-center gap-3 hover:bg-base-200"
-            :href="`/blog/${item.slug}`"
-            @click="close()"
-          >
+          <a class="py-3 px-4 flex items-center gap-3 hover:bg-base-200" :href="`/blog/${item.slug}`" @click="close()">
             <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"/>
             </svg>
             <span class="truncate" x-text="item.title"></span>
           </a>
@@ -91,37 +67,48 @@ const {
 </div>
 
 <script is:inline>
-  function blogSearchComponent({ apiPath = '/api/v1/search/blog-search', limit = 10 } = {}) {
+  function debounce(fn, wait=250){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),wait)}}
+
+  function blogSearchComponent() {
     return {
+      apiPath: '/api/v1/search/search-blog',
       q: '',
       results: [],
       loading: false,
       open: false,
-      placeholder: 'Search articles...',
-      limit,
-      async search() {
-        const q = this.q.trim();
+      limit: 10,
+
+      init(root) {
+        const p = root.getAttribute('data-api');
+        if (p) this.apiPath = p;
+
+        this.$watch('q', debounce((val) => {
+          const term = (val || '').trim();
+          if (!term) { this.results = []; this.open = false; return; }
+          this.search(term);
+        }, 250));
+      },
+
+      async search(term) {
         this.loading = true;
         try {
-          const res = await fetch(`${apiPath}?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+          const res = await fetch(`${this.apiPath}?q=${encodeURIComponent(term)}`, { cache: 'no-store' });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           this.results = await res.json();
+          this.open = true;
         } catch (e) {
           console.error('Search failed:', e);
           this.results = [];
         } finally {
           this.loading = false;
-          this.open = true;
         }
       },
-      clear() {
-        this.q = '';
-        this.results = [];
-        this.open = false;
-      },
-      close() {
-        this.open = false;
-      },
+
+      clear() { this.q = ''; this.results = []; this.open = false; },
+      close() { this.open = false; },
+      goToFirst() { if (this.results.length > 0) window.location.href = `/blog/${this.results[0].slug}`; },
     }
   }
 </script>
+
+
