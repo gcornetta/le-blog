@@ -2,34 +2,55 @@
 // src/pages/blog.astro
 import BlogLayout from '../layouts/BlogLayout.astro';
 import MainPostCard from '../components/content/MainPostCard.astro';
+import PostCard from '../components/content/PostCard.astro';
 import BlogSearch from '../components/search/BlogSearch.astro';
+import FabMenu from '../components/ui/FabMenu.astro';
+
 import { getCollection } from 'astro:content';
 
+// Load posts (skip drafts in PROD)
 const posts = (await getCollection('blog', ({ data }) => (
   import.meta.env.PROD ? !data.draft : true
 ))).sort((a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate));
 
+// Main post
 const mainPost =
-  posts.find((p) => p.data?.main === true || p.data?.main === "true") ??
-  posts[0];
+  posts.find((p) => p.data?.main === true || p.data?.main === "true") ?? posts[0];
+
+// Non-main posts
+const others = posts.filter((p) => !(p.data?.main === true || p.data?.main === "true"));
+
+// Configurable page size for non-main posts
+const DEFAULT_PAGE_SIZE = Number(import.meta.env.PUBLIC_BLOG_PAGE_SIZE) || 9;
+const qsLimit = Number(Astro.url?.searchParams.get('limit') ?? '');
+const PAGE_SIZE = Number.isFinite(qsLimit) && qsLimit > 0 ? qsLimit : DEFAULT_PAGE_SIZE;
+
+const othersLimited = others.slice(0, PAGE_SIZE);
 ---
 <BlogLayout title="Learnelectronics Blog" description="Latest articles and updates">
   <section class="not-prose">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
 
-      <!-- Search: on top by default, right column on lg+ -->
+      <!-- RIGHT (4th col): Search (on top for mobile, sticky on lg+) -->
       <aside class="order-1 lg:order-2 lg:col-span-1">
         <div class="lg:sticky top-24">
           <BlogSearch apiPath="/api/v1/search/search-blog" />
         </div>
       </aside>
 
-      <!-- Main post: below on mobile, spans 3 columns on lg+ -->
-      <div class="order-2 lg:order-1 lg:col-span-3">
+      <!-- LEFT (first 3 cols): Main card + 3-up grid of non-main posts -->
+      <div class="order-2 lg:order-1 lg:col-span-3 space-y-8">
         {mainPost && <MainPostCard post={mainPost} />}
+
+        <!-- Non-main posts grid: auto-fit with a min width; falls back to 2 per row when tight -->
+        <div class="grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
+          {othersLimited.map((p) => <PostCard post={p} />)}
+        </div>
       </div>
 
     </div>
   </section>
+  <FabMenu />
 </BlogLayout>
+
 
