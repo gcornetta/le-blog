@@ -79,7 +79,6 @@ const othersPage = filteredByTags.slice(start, end);
     x-init="init([${allTags.map(t => JSON.stringify(t)).join(',')}])"
   >
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-
       <!-- RIGHT (4th col): Search + Categories + Tags -->
       <aside class="order-1 lg:order-2 lg:col-span-1">
         <div class="lg:sticky top-24 space-y-6">
@@ -93,6 +92,7 @@ const othersPage = filteredByTags.slice(start, end);
       <div class="order-2 lg:order-1 lg:col-span-3 space-y-8">
         {mainPost && <MainPostCard post={mainPost} />}
 
+        <!-- Equal-height per row via pure CSS: items-stretch + card.h-full -->
         <div id="posts-grid" class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
           {othersPage.map((p) => {
             const tags = (Array.isArray(p.data?.tags) ? p.data.tags : []).map(t => String(t).trim());
@@ -174,36 +174,6 @@ const othersPage = filteredByTags.slice(start, end);
 
       window.addEventListener('popstate', () => window.location.reload());
     })();
-
-    (function () {
-      const grid = document.getElementById('posts-grid');
-      if (!grid) return;
-
-      const debounce = (fn, d=100) => {
-        let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), d); };
-      };
-
-      function equalizeCards() {
-        const cards = grid.querySelectorAll('.card');
-        if (!cards.length) return;
-        cards.forEach(c => { c.style.minHeight = ''; });
-        let maxH = 0;
-        cards.forEach(c => { maxH = Math.max(maxH, c.offsetHeight); });
-        cards.forEach(c => { c.style.minHeight = maxH + 'px'; });
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', equalizeCards, { once: true });
-      } else {
-        equalizeCards();
-      }
-
-      window.addEventListener('resize', debounce(equalizeCards, 120));
-      const mo = new MutationObserver(debounce(equalizeCards, 60));
-      mo.observe(grid, { childList: true, subtree: true });
-
-      window.addEventListener('pagination:change', () => setTimeout(equalizeCards, 0));
-    })();
   </script>
 
   <!-- Alpine component: reads/writes ?tags=..., preselects badges from URL -->
@@ -253,4 +223,5 @@ const othersPage = filteredByTags.slice(start, end);
     });
   </script>
 </BlogLayout>
+
 
