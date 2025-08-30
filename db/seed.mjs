@@ -1,8 +1,57 @@
 // https://astro.build/db/seed.mjs
 
 import 'dotenv/config';
-import { db, Admins, Users, Courses, Engagement, FeaturedCourses, FeaturedVideo, LatestVideos } from 'astro:db';
+import fs from 'node:fs';
+import path from 'node:path';
+import matter from 'gray-matter';
+
+import { db, Admins, Users, Courses, Engagement, FeaturedCourses, FeaturedVideo, LatestVideos, PostStats } from 'astro:db';
 import { faker } from '@faker-js/faker';
+
+
+const BLOG_DIR = path.resolve(process.cwd(), 'src/content/blog');
+const MARKDOWN_RX = /\.(md|mdx|mdoc)$/i;
+
+function readFrontmatter(filePath) {
+  const src = fs.readFileSync(filePath, 'utf8');
+  const { data } = matter(src);
+  return data || {};
+}
+
+function discoverBlogEntries(dir = BLOG_DIR) {
+  if (!fs.existsSync(dir)) return [];
+
+  const out = [];
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      // index.* inside a folder → slug = folder name
+      const indexName = ['index.md', 'index.mdx', 'index.mdoc'].find(n =>
+        fs.existsSync(path.join(full, n))
+      );
+      if (indexName) {
+        const fm = readFrontmatter(path.join(full, indexName));
+        out.push({ slug: entry.name, data: fm });
+      } else {
+        // recurse (allows nested dirs if you ever use them)
+        out.push(...discoverBlogEntries(full));
+      }
+      continue;
+    }
+
+    if (MARKDOWN_RX.test(entry.name)) {
+      // single file → slug = filename (no extension)
+      const fm = readFrontmatter(full);
+      const slug = path.basename(entry.name, path.extname(entry.name));
+      out.push({ slug, data: fm });
+    }
+  }
+
+  return out;
+}
+
 
 export default async function seed() {
   console.log("🔵 Seed script started...");
@@ -23,7 +72,7 @@ export default async function seed() {
     } else {
       await db.insert(Admins).values([
         {
-          id: 1, 
+          id: 1,
           email,
           password_hash,
         }
@@ -37,25 +86,23 @@ export default async function seed() {
   // Clear existing users to ensure a clean slate and all users have the correct domain.
   await db.delete(Users);
   console.log("Existing student users cleared.");
-  
+
   const usersToInsert = [];
   const numToCreate = 10;
   for (let i = 0; i < numToCreate; i++) {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
     const fullName = `${firstName} ${lastName}`;
-    // Create an email from the name, converting to lowercase and replacing spaces/special characters
     const emailName = faker.helpers.slugify(`${firstName}.${lastName}`).toLowerCase();
 
     usersToInsert.push({
       name: fullName,
-      // Manually construct the email address to ensure the correct domain and name part.
       email: `${emailName}@usp.ceu.es`,
       registration_date: faker.date.past({ years: 1 }),
       last_activity: faker.date.recent({ days: 30 }),
     });
   }
-  
+
   if (usersToInsert.length > 0) {
     await db.insert(Users).values(usersToInsert);
     console.log(`Successfully seeded ${usersToInsert.length} new student users with domain 'usp.ceu.es'.`);
@@ -78,12 +125,10 @@ export default async function seed() {
     console.log("Courses already exist; skipping course seeding.");
   }
 
-    // --- Featured Courses Seeding ---
+  // --- Featured Courses Seeding ---
   console.log("Seeding featured courses...");
-  // Clear to keep it simple & idempotent in dev
   await db.delete(FeaturedCourses);
 
-  // Try to link to Courses by title; if not found, leave course_id null
   const courseByTitle = {};
   const allCourses = await db.select().from(Courses);
   for (const c of allCourses) courseByTitle[c.title] = c.id;
@@ -143,21 +188,20 @@ export default async function seed() {
   const allUsers = await db.select().from(Users);
   const engagementTypes = ['video_watch', 'material_download', 'quiz_completion'];
 
-  // Seed some random engagement data for each user
   for (const user of allUsers) {
     for (let i = 0; i < faker.number.int({ min: 5, max: 20 }); i++) {
       const type = faker.helpers.arrayElement(engagementTypes);
       const contentId = faker.helpers.arrayElement([
-        faker.string.alphanumeric(11), // Fake YouTube video ID
-        `course-material-${faker.string.uuid()}.pdf`, // Fake material filename
-        `quiz-${faker.string.uuid()}`, // Fake quiz ID
+        faker.string.alphanumeric(11),
+        `course-material-${faker.string.uuid()}.pdf`,
+        `quiz-${faker.string.uuid()}`,
       ]);
-      const metric = type === 'video_watch' 
-        ? faker.number.int({ min: 10, max: 600 }) // Watch time in seconds
+      const metric = type === 'video_watch'
+        ? faker.number.int({ min: 10, max: 600 })
         : type === 'material_download'
-        ? 1 // Download count
-        : faker.number.int({ min: 0, max: 100 }); // Quiz score
-      
+        ? 1
+        : faker.number.int({ min: 0, max: 100 });
+
       await db.insert(Engagement).values({
         user_id: user.id,
         type,
@@ -169,7 +213,7 @@ export default async function seed() {
   }
   console.log("Successfully seeded engagement data for users.");
 
-  // Featured Video (single row)
+  // --- Featured Video ---
   console.log("Seeding featured video…");
   await db.delete(FeaturedVideo);
   await db.insert(FeaturedVideo).values([
@@ -183,7 +227,7 @@ export default async function seed() {
   ]);
   console.log("Featured video seeded.");
 
-  // Latest Videos (carousel)
+  // --- Latest Videos ---
   console.log("Seeding latest videos…");
   await db.delete(LatestVideos);
   await db.insert(LatestVideos).values([
@@ -285,6 +329,43 @@ export default async function seed() {
     },
   ]);
   console.log("Latest videos seeded.");
+
+// --- PostStats Seeding (from filesystem; no astro:content) ---
+console.log("Seeding post view statistics (PostStats)…");
+
+// Clear existing stats for deterministic dev seeding
+await db.delete(PostStats);
+
+const rawPosts = discoverBlogEntries(); // [{ slug, data }, …]
+if (rawPosts.length === 0) {
+  console.log('No blog entries found in src/content/blog; skipping PostStats seeding.');
+} else {
+  // Align draft filtering with your page logic:
+  const includeDrafts = !process.env.NODE_ENV || process.env.NODE_ENV !== 'production';
+  const posts = rawPosts.filter(p => (includeDrafts ? true : !p.data?.draft));
+
+  const rows = posts.map(p => {
+    const isMain = (p.data?.main === true || p.data?.main === 'true');
+    const base = Math.floor(Math.random() * (800 - 20 + 1)) + 20; // 20–800
+    const boost = isMain ? (1.6 + Math.random() * 0.9) : 1;      // 1.6–2.5
+    const noise = Math.floor(Math.random() * 36) - 15;           // -15..+20
+    const views = Math.max(0, Math.min(5000, Math.round(base * boost + noise)));
+
+    // more recent for popular posts (roughly)
+    const daysBack = Math.max(1, Math.round(30 - Math.min(views / 50, 25))); // 1..30
+    const last_viewed_at = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+
+    return { slug: p.slug, views, last_viewed_at };
+  });
+
+  if (rows.length > 0) {
+    await db.insert(PostStats).values(rows);
+    console.log(`Seeded PostStats for ${rows.length} posts.`);
+  } else {
+    console.log('All posts filtered out; no PostStats seeded.');
+  }
+}
+
 
   console.log("✅ Seed script finished.");
 }

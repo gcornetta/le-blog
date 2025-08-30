@@ -8,6 +8,7 @@ import FabMenu from '../components/ui/FabMenu.astro';
 import Pagination from '../components/ui/Pagination.astro';
 import Categories from '../components/filters/Categories.astro';
 import TagsFilter from '../components/filters/TagsFilter.astro';
+import MostReadPosts from '../components/content/MostReadPosts.astro';
 
 import { getCollection } from 'astro:content';
 
@@ -85,6 +86,7 @@ const othersPage = filteredByTags.slice(start, end);
           <BlogSearch apiPath="/api/v1/search/search-blog" />
           <Categories source={others} />
           <TagsFilter allTags={allTags} />
+          <MostReadPosts />
         </div>
       </aside>
 

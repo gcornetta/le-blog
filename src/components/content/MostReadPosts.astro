@@ -1,0 +1,79 @@
+---
+// src/components/content/MostReadPosts.astro
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+
+const limit = 5;
+
+// Absolute API URL for SSR
+const apiURL = new URL(`/api/v1/posts/most-read?limit=${limit}`, Astro.url);
+const resp = await fetch(apiURL);
+const stats = resp.ok ? await resp.json() : [];
+
+// Load posts and index by slug
+const entries = await getCollection("blog", ({ data }) =>
+  import.meta.env.PROD ? !data.draft : true
+);
+const bySlug = new Map(entries.map(e => [e.slug, e]));
+
+// Join stats with entries (keep views)
+const rows = stats
+  .map((s) => {
+    const entry = bySlug.get(s.slug);
+    if (!entry) return null;
+    return { entry, views: Number(s.views) || 0 };
+  })
+  .filter(Boolean)
+  // ✅ ensure correct order regardless of API/db behavior
+  .sort((a, b) => b.views - a.views);
+
+// Compact number (e.g., 1.2k)
+const formatViews = (n) => {
+  if (n >= 10000) return `${Math.round(n / 1000)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+};
+---
+
+<ul class="list bg-base-100 rounded-box shadow-md">
+  <li class="p-4 pb-2 text-lg font-semibold text-base-content">Most Popular</li>
+
+  {rows.length === 0 ? (
+    <li class="p-4 text-sm opacity-60">No data yet.</li>
+  ) : (
+    rows.map(({ entry, views }, idx) => {
+      const fm = entry.data;
+      return (
+        <li class="list-row" key={entry.slug}>
+          <div class="text-4xl font-thin opacity-30 tabular-nums">
+            {(idx + 1).toString().padStart(2, "0")}
+          </div>
+
+          <div>
+            {fm.heroImage ? (
+              <Image src={fm.heroImage} alt={fm.title} width={40} height={40} class="rounded-box" />
+            ) : (
+              <div class="size-10 rounded-box bg-base-200"></div>
+            )}
+          </div>
+
+          <div class="list-col-grow">
+            <a href={`/blog/${entry.slug}`} class="hover:underline text-xs leading-snug font-medium">{fm.title}</a>
+            {fm.description && (
+              <div class="uppercase font-semibold opacity-60 text-[0.68rem] leading-tight">{fm.description}</div>
+            )}
+          </div>
+
+          {/* 👇 Circular badge with views */}
+          <div
+            class="badge badge-primary rounded-full p-0 size-10 aspect-square flex items-center justify-center shrink-0 tabular-nums font-medium text-[0.70rem] leading-none"
+            title={`${views.toLocaleString()} reads`}
+            aria-label={`${views.toLocaleString()} reads`}
+          >
+            {formatViews(views)}
+          </div>
+        </li>
+      );
+    })
+  )}
+</ul>

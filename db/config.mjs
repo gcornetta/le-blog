@@ -146,6 +146,16 @@ const LatestVideos = defineTable({
   },
 });
 
+// Post statistics
+const PostStats = defineTable({
+  name: "post_stats",
+  columns: {
+    slug: column.text({ primaryKey: true }),   // unique ID from post frontmatter
+    views: column.number({ default: 0 }),      // total read count
+    last_viewed_at: column.date({ default: NOW }) // updated on last view
+  }
+});
+
 export default defineDb({
   tables: {
     Admins,
@@ -159,5 +169,6 @@ export default defineDb({
     FeaturedCourses,
     FeaturedVideo,
     LatestVideos,
+    PostStats,
   },
 });
