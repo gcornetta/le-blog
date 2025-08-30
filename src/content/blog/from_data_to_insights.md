@@ -5,7 +5,7 @@ main: false
 featured: false
 description: "Turning raw experimental data into actionable design insights."
 categories: ["Software"]
-tags: ["ML", "analytics"]
+tags: ["ML"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

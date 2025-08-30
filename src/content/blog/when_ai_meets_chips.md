@@ -5,7 +5,7 @@ main: false
 featured: false
 description: "Exploring the convergence of artificial intelligence and semiconductor hardware."
 categories: ["Electronics"]
-tags: ["AI","ML", "processors"]
+tags: ["AI", "processors"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

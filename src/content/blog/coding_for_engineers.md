@@ -5,7 +5,7 @@ main: false
 featured: false
 description: "How astronomers discover planets around other stars"
 categories: ["Software"]
-tags: ["C", "Python", "coding"]
+tags: ["C", "Python"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

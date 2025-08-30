@@ -5,7 +5,7 @@ main: false
 featured: true
 description: "How astronomers discover planets around other stars."
 categories: ["Astronomy"]
-tags: ["exoplanets", "research", "space-telescopes"]
+tags: ["exoplanets", "space-telescopes"]
 author: "Prof. Michael Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

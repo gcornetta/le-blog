@@ -5,7 +5,7 @@ main: false
 featured: false
 description: "Key principles for beginners in radio-frequency design."
 categories: ["RF"]
-tags: ["RF", "circuits", "basics"]
+tags: ["RF", "circuits"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

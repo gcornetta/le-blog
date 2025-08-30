@@ -5,7 +5,7 @@ main: false
 featured: false
 description: "Understanding the limitations of simulation results."
 categories: ["Software"]
-tags: ["models", "errors"]
+tags: ["models"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

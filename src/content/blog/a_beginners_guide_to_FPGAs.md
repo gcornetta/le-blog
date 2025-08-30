@@ -5,7 +5,7 @@ main: false
 featured: false
 description: "A simple path to understanding field-programmable gate arrays."
 categories: ["Digital"]
-tags: ["FPGAs", "HDL", "programming"]
+tags: ["FPGAs", "HDL"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

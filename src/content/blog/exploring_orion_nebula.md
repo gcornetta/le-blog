@@ -5,7 +5,7 @@ main: false
 featured: true
 description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth."
 categories: ["Astronomy"]
-tags: ["astrophotography", "nebulae", "beginner"]
+tags: ["astrophotography", "nebulae"]
 author: "Dr. Sarah Johnson"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg

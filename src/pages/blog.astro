@@ -7,6 +7,7 @@ import BlogSearch from '../components/search/BlogSearch.astro';
 import FabMenu from '../components/ui/FabMenu.astro';
 import Pagination from '../components/ui/Pagination.astro';
 import Categories from '../components/filters/Categories.astro';
+import TagsFilter from '../components/filters/TagsFilter.astro';
 
 import { getCollection } from 'astro:content';
 
@@ -25,54 +26,85 @@ const others = posts.filter((p) => !(p.data?.main === true || p.data?.main === "
 // URL params (filters + pagination)
 const url = Astro.url;
 const cat = url.searchParams.get('cat') ?? '';
+const tagsParam = url.searchParams.get('tags') ?? '';
+const selectedTags = tagsParam
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
+// Server-side category filter (case-insensitive)
+const filtered = others.filter(p => {
+  if (!cat) return true;
+  const arr = Array.isArray(p.data?.categories) ? p.data.categories : [];
+  return arr.some(v => String(v).toLowerCase() === cat.toLowerCase());
+});
+
+// Apply tag filter (ANY-match, case-insensitive) BEFORE pagination
+const filteredByTags = selectedTags.length
+  ? filtered.filter(p => {
+      const t = Array.isArray(p.data?.tags) ? p.data.tags : [];
+      if (!t.length) return false;
+      const set = new Set(t.map(x => String(x).trim().toLowerCase()));
+      return selectedTags.some(sel => set.has(String(sel).trim().toLowerCase()));
+    })
+  : filtered;
+
+// Build unique, sorted tag list from front-matter (for the widget)
+const tagSet = new Set<string>();
+for (const p of posts) {
+  const tags = Array.isArray(p.data?.tags) ? p.data.tags : [];
+  tags.forEach(t => tagSet.add(String(t).trim()));
+}
+const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+
+// Pagination over the server-filtered list
 const DEFAULT_PAGE_SIZE = Number(import.meta.env.PUBLIC_BLOG_PAGE_SIZE) || 9;
 const qsLimit = Number(url.searchParams.get('limit') ?? '');
 const PAGE_SIZE = Number.isFinite(qsLimit) && qsLimit > 0 ? qsLimit : DEFAULT_PAGE_SIZE;
 const currentPage = Math.max(1, Number(url.searchParams.get('page') ?? 1));
 
-// Server-side category filter
-const filtered = others.filter(p => {
-  if (!cat) return true;
-  const arr = Array.isArray(p.data?.categories) ? p.data.categories : [];
-  // case-insensitive match
-  return arr.some(v => String(v).toLowerCase() === cat.toLowerCase());
-});
-
-// Pagination
-const totalItems = filtered.length;
+const totalItems = filteredByTags.length;
 const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 const safePage = Math.min(currentPage, totalPages);
 const start = (safePage - 1) * PAGE_SIZE;
 const end = start + PAGE_SIZE;
-const othersPage = filtered.slice(start, end);
+const othersPage = filteredByTags.slice(start, end);
 ---
 
 <BlogLayout title="Learnelectronics Blog" description="Latest articles and updates">
-  <section class="not-prose">
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start" id="blog-paged">
+  <section
+    class="not-prose"
+    id="blog-paged"
+    x-data="tagsFilter"
+    x-init="init([${allTags.map(t => JSON.stringify(t)).join(',')}])"
+  >
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
 
-      <!-- RIGHT (4th col): Search -->
+      <!-- RIGHT (4th col): Search + Categories + Tags -->
       <aside class="order-1 lg:order-2 lg:col-span-1">
-        <div class="lg:sticky top-24">
+        <div class="lg:sticky top-24 space-y-6">
           <BlogSearch apiPath="/api/v1/search/search-blog" />
           <Categories source={others} />
+          <TagsFilter allTags={allTags} />
         </div>
       </aside>
 
       <!-- LEFT (first 3 cols): Main + grid -->
       <div class="order-2 lg:order-1 lg:col-span-3 space-y-8">
         {mainPost && <MainPostCard post={mainPost} />}
-        <div
-          id="posts-grid"
-          class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
-        >
-          {othersPage.map((p) => (
-            <div class="h-full">
-              <PostCard post={p} />
-            </div>
-          ))}
+
+        <div id="posts-grid" class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+          {othersPage.map((p) => {
+            const tags = (Array.isArray(p.data?.tags) ? p.data.tags : []).map(t => String(t).trim());
+            const csv = tags.join(',');
+            return (
+              <div class="h-full" data-tags={csv}>
+                <PostCard post={p} />
+              </div>
+            );
+          })}
         </div>
+
         {totalPages > 1 && (
           <div class="mt-6 flex justify-center">
             <Pagination
@@ -98,7 +130,7 @@ const othersPage = filtered.slice(start, end);
 
       function buildURL(page) {
         const u = new URL(window.location.href);
-        u.searchParams.set('page', String(page));
+        u.searchParams.set('page', String(page)); // preserves ?tags=...
         return u.toString();
       }
 
@@ -111,15 +143,18 @@ const othersPage = filtered.slice(start, end);
 
           const nextGrid = doc.querySelector('#posts-grid');
           const curGrid  = root.querySelector('#posts-grid');
-          if (nextGrid && curGrid) curGrid.replaceWith(nextGrid);
+          if (nextGrid && curGrid) {
+            curGrid.replaceWith(nextGrid);
+            if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+              window.Alpine.initTree(nextGrid);
+            }
+          }
 
-          // Replace the single bottom pager
           const nextPagerWrap = doc.querySelector('.mt-6.flex.justify-center');
           const curPagerWrap  = root.querySelector('.mt-6.flex.justify-center');
           if (nextPagerWrap && curPagerWrap) curPagerWrap.replaceWith(nextPagerWrap);
 
           window.history.pushState({}, '', url);
-          // Smooth scroll to the very top of the page
           window.requestAnimationFrame(() => {
             window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
           });
@@ -140,41 +175,82 @@ const othersPage = filtered.slice(start, end);
       window.addEventListener('popstate', () => window.location.reload());
     })();
 
-      (function () {
-    const grid = document.getElementById('posts-grid');
-    if (!grid) return;
+    (function () {
+      const grid = document.getElementById('posts-grid');
+      if (!grid) return;
 
-    const debounce = (fn, d=100) => {
-      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), d); };
-    };
+      const debounce = (fn, d=100) => {
+        let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), d); };
+      };
 
-    function equalizeCards() {
-      const cards = grid.querySelectorAll('.card');
-      if (!cards.length) return;
-      // reset first (in case content changed)
-      cards.forEach(c => { c.style.minHeight = ''; });
-      let maxH = 0;
-      cards.forEach(c => { maxH = Math.max(maxH, c.offsetHeight); });
-      cards.forEach(c => { c.style.minHeight = maxH + 'px'; });
-    }
+      function equalizeCards() {
+        const cards = grid.querySelectorAll('.card');
+        if (!cards.length) return;
+        cards.forEach(c => { c.style.minHeight = ''; });
+        let maxH = 0;
+        cards.forEach(c => { maxH = Math.max(maxH, c.offsetHeight); });
+        cards.forEach(c => { c.style.minHeight = maxH + 'px'; });
+      }
 
-    // Run on load
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', equalizeCards, { once: true });
-    } else {
-      equalizeCards();
-    }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', equalizeCards, { once: true });
+      } else {
+        equalizeCards();
+      }
 
-    // Run on resize
-    window.addEventListener('resize', debounce(equalizeCards, 120));
+      window.addEventListener('resize', debounce(equalizeCards, 120));
+      const mo = new MutationObserver(debounce(equalizeCards, 60));
+      mo.observe(grid, { childList: true, subtree: true });
 
-    // Re-run when the grid content changes (e.g., after pagination/filter)
-    const mo = new MutationObserver(debounce(equalizeCards, 60));
-    mo.observe(grid, { childList: true, subtree: true });
+      window.addEventListener('pagination:change', () => setTimeout(equalizeCards, 0));
+    })();
+  </script>
 
-    // If you have a custom event after pagination swap, hook it too:
-    window.addEventListener('pagination:change', () => setTimeout(equalizeCards, 0));
-  })();
+  <!-- Alpine component: reads/writes ?tags=..., preselects badges from URL -->
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('tagsFilter', () => ({
+        allTags: [],
+        selected: new Set(),    // normalized (lowercased) keys
+        error: '',
+
+        norm(t) { return String(t).trim().toLowerCase(); },
+
+        init(tags) {
+          this.allTags = Array.isArray(tags) ? tags : [];
+          const q = new URL(window.location.href).searchParams.get('tags') || '';
+          q.split(',').map(s => s.trim()).filter(Boolean).forEach(t => this.selected.add(this.norm(t)));
+        },
+
+        toggle(tag) {
+          this.error = '';
+          const k = this.norm(tag);
+          this.selected.has(k) ? this.selected.delete(k) : this.selected.add(k);
+        },
+
+        isSelected(tag) {
+          return this.selected.has(this.norm(tag));
+        },
+
+        apply() {
+          if (this.selected.size === 0) {
+            this.error = 'Select at least one tag before applying the filter.';
+            return;
+          }
+          const u = new URL(window.location.href);
+          u.searchParams.set('tags', Array.from(this.selected).join(',')); // case-insensitive on server
+          u.searchParams.set('page', '1');
+          window.location.assign(u.toString());
+        },
+
+        clear() {
+          const u = new URL(window.location.href);
+          u.searchParams.delete('tags');
+          u.searchParams.set('page', '1');
+          window.location.assign(u.toString());
+        }
+      }));
+    });
   </script>
 </BlogLayout>
 

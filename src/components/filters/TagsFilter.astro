@@ -1,0 +1,42 @@
+---
+// src/components/filters/TagsFilter.astro
+const {
+  allTags = [],
+  title = 'Tags',
+  // Match Categories title style:
+  titleClass = 'p-4 pb-2 text-lg font-semibold text-base-content'
+} = Astro.props;
+
+const q = (s) => JSON.stringify(String(s)); // safe literal for Alpine expression
+---
+
+<div class="w-full">
+  <!-- Title -->
+  <h3 class={titleClass}>{title}</h3>
+
+  <!-- Badges -->
+  <div class="flex flex-wrap gap-2 items-center px-4">
+    {allTags.map(tag => (
+      <button
+        type="button"
+        class="badge cursor-pointer transition"
+        x-bind:class={`isSelected(${q(tag)}) ? 'badge-primary text-primary-content' : 'badge-outline'`}
+        x-on:click={`toggle(${q(tag)})`}
+        aria-pressed="false"
+      >
+        {tag}
+      </button>
+    ))}
+  </div>
+
+  <!-- Actions -->
+  <div class="mt-4 flex items-center gap-2 px-4">
+    <button type="button" class="btn btn-primary" x-on:click="apply()">Apply</button>
+    <button type="button" class="btn btn-ghost" x-on:click="clear()">Clear</button>
+  </div>
+
+  <!-- Error -->
+  <p class="mt-2 text-sm text-error px-4" x-show="error" x-text="error"></p>
+</div>
+
+
