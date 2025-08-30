@@ -4,7 +4,7 @@ pubDate: 2021-10-22
 main: false
 featured: false
 description: "Comparing cloud computing to local resources for engineers."
-categories: ["Software", "Networks"]
+categories: ["Software"]
 tags: ["HPC", "infrastructure"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

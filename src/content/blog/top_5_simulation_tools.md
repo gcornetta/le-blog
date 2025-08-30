@@ -4,7 +4,7 @@ pubDate: 2021-01-14
 main: false
 featured: false
 description: "A rundown of the most useful circuit and device simulators available today."
-categories: ["Software", "Engineering"]
+categories: ["Software"]
 tags: ["simulation", "workflow"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

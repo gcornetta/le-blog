@@ -4,7 +4,7 @@ pubDate: 2022-09-22
 main: false
 featured: false
 description: "Breaking down the inner workings of the most common lab tool."
-categories: ["Test", "Education"]
+categories: ["Electronics"]
 tags: ["signals", "instrumentation"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

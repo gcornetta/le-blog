@@ -4,7 +4,7 @@ pubDate: 2021-06-20
 main: false
 featured: false
 description: "A quick comparison of batteries and supercapacitors for energy storage."
-categories: ["Energy", "Devices"]
+categories: ["Energy"]
 tags: ["storage", "devices"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

@@ -4,7 +4,7 @@ pubDate: 2021-05-08
 main: false
 featured: false
 description: "A beginner-friendly introduction to Git for managing software projects."
-categories: ["Software", "Workflow"]
+categories: ["Software"]
 tags: ["git", "versioning", "devOps"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

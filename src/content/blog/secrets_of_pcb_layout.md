@@ -4,7 +4,7 @@ pubDate: 2021-04-06
 main: false
 featured: false
 description: "Practical layout rules that make or break a printed circuit board."
-categories: ["Electronics", "Design"]
+categories: ["Electronics"]
 tags: ["PCB", "layout"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

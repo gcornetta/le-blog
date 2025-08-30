@@ -4,7 +4,7 @@ pubDate: 2021-09-22
 main: false
 featured: false
 description: "Why Boolean algebra is the foundation of digital electronics."
-categories: ["Digital", "Education"]
+categories: ["Digital"]
 tags: ["algebra", "logic"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

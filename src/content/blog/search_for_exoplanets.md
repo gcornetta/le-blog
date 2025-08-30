@@ -4,7 +4,7 @@ pubDate: 2023-09-22
 main: false
 featured: true
 description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
+categories: ["Astronomy"]
 tags: ["exoplanets", "research", "space-telescopes"]
 author: "Prof. Michael Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

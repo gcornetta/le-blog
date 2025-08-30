@@ -4,7 +4,7 @@ pubDate: 2023-10-15
 main: false
 featured: true
 description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth."
-categories: ["Astronomy", "Space"]
+categories: ["Astronomy"]
 tags: ["astrophotography", "nebulae", "beginner"]
 author: "Dr. Sarah Johnson"
 avatarImage: ../../assets/images/authors/gcornetta.png

@@ -4,7 +4,7 @@ pubDate: 2021-05-22
 main: false
 featured: false
 description: "Turning raw experimental data into actionable design insights."
-categories: ["AI", "Data"]
+categories: ["Software"]
 tags: ["ML", "analytics"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

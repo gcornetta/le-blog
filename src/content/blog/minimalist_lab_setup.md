@@ -4,7 +4,7 @@ pubDate: 2021-06-30
 main: false
 featured: false
 description: "Setting up a functional electronics lab with minimal gear."
-categories: ["Teaching", "Electronics"]
+categories: ["Electronics"]
 tags: ["instrumentation", "measurment"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

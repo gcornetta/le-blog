@@ -4,7 +4,7 @@ pubDate: 2021-04-30
 main: false
 featured: false
 description: "Why metal contacts are critical in semiconductor devices."
-categories: ["Materials", "Devices"]
+categories: ["Electronics"]
 tags: ["semiconductors", "hetero-junctions"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

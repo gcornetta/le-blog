@@ -1,0 +1,120 @@
+---
+import { getCollection } from 'astro:content';
+
+/**
+ * Props:
+ * - excludeSlugs?: string[]     // e.g., exclude the mainPost slug from counts
+ * - queryParam?: string = 'cat' // query string key to use
+ * - title?: string = 'Categories'
+ */
+const {
+  excludeSlugs = [],
+  queryParam = 'cat',
+  title = 'Categories',
+} = Astro.props;
+
+const url = Astro.url;
+
+// Load posts (skip drafts in PROD)
+const posts = await getCollection('blog', ({ data }) =>
+  import.meta.env.PROD ? !data.draft : true
+);
+
+// Build counts (optionally excluding some slugs, e.g., the hero/main post)
+const exclude = new Set(excludeSlugs.filter(Boolean));
+const counts = new Map<string, number>();
+
+for (const p of posts) {
+  if (exclude.has(p.slug)) continue;
+  const cats = Array.isArray(p.data?.categories) ? p.data.categories : [];
+  for (const raw of cats) {
+    if (typeof raw !== 'string') continue;
+    const c = raw.trim();
+    if (!c) continue;
+    counts.set(c, (counts.get(c) ?? 0) + 1);
+  }
+}
+
+// Sorted list of [category, count]
+const list = [...counts.entries()].sort((a, b) =>
+  a[0].localeCompare(b[0], undefined, { sensitivity: 'base' })
+);
+
+const active = url.searchParams.get(queryParam) ?? '';
+
+function buildHref(cat: string | null) {
+  const u = new URL(url);
+  if (cat) {
+    u.searchParams.set(queryParam, cat);
+  } else {
+    u.searchParams.delete(queryParam);
+  }
+  // reset to first page on filter change
+  u.searchParams.set('page', '1');
+  return u.pathname + u.search;
+}
+---
+
+<!-- DaisyUI list with light-grey outline and no animations -->
+<ul class="list bg-base-100 rounded-box border border-base-300 shadow-none categories-list divide-y divide-base-300">
+
+  <!-- Header row: LARGE, solid, black (theme-aware) -->
+<li class="p-4 pb-2 text-lg font-semibold text-base-content">{title}</li>
+
+<!-- "All" row -->
+<li>
+    <a
+    href={buildHref(null)}
+    class={`list-row group w-full flex items-center justify-between text-[0.90rem] py-1 leading-tight transition-none ${active ? '' : 'bg-base-200'}`}
+    aria-current={active ? undefined : 'page'}
+    >
+    <span class="truncate font-medium select-none transition-none hover:text-primary group-hover:text-primary">All</span>
+    <span class="badge badge-sm badge-primary text-white ml-3 w-12 justify-center px-0">{posts.length}</span>
+    </a>
+</li>
+
+<!-- Category rows -->
+{list.map(([cat, count]) => {
+  const isActive = active === cat;
+  return (
+    <li>
+        <a
+        href={buildHref(cat)}
+        class={`list-row group w-full flex items-center justify-between text-[0.90rem] py-1 leading-tight transition-none ${isActive ? 'bg-base-200' : ''}`}
+        aria-current={isActive ? 'page' : undefined}
+        >
+        <span class="truncate font-medium select-none transition-none hover:text-primary group-hover:text-primary">{cat}</span>
+        <span class="badge badge-sm badge-primary text-white ml-3 w-12 justify-center px-0">{count}</span>
+        </a>
+    </li>
+  );
+})}
+
+
+
+<style is:global>
+  /* Kill any hover/transition/animation inside this list only */
+  .categories-list, .categories-list * {
+    transition: none !important;
+    animation: none !important;
+  }
+  .categories-list .list-row:hover,
+  .categories-list .list-row:focus {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+/* Make list rows denser by removing default min-height and using smaller vertical padding */
+  .categories-list .list-row {
+    min-height: 0 !important;
+    padding-top: 0.5rem;   /* = py-1 */
+    padding-bottom: 0.5rem;
+  }
+  /* No underline anywhere in the row; color change only */
+  .categories-list .list-row,
+  .categories-list .list-row * {
+    text-decoration: none !important;
+    transition: none !important; /* instant color change, no animation */
+    animation: none !important;
+  }
+</style>

@@ -4,7 +4,7 @@ pubDate: 2022-09-22
 main: false
 featured: false
 description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
+categories: ["Astronomy"]
 tags: ["exoplanets", "space-telescopes"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

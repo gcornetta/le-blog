@@ -4,7 +4,7 @@ pubDate: 2021-01-29
 main: false
 featured: false
 description: "Simple and affordable tricks to save energy at home."
-categories: ["Sustainability", "Energy"]
+categories: ["Energy"]
 tags: ["solar", "eco",  "DIY"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

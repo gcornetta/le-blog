@@ -4,7 +4,7 @@ pubDate: 2021-05-07
 main: false
 featured: false
 description: "The role of device models in ensuring realistic circuit simulations."
-categories: ["Simulation","Electronics"]
+categories: ["Electronics"]
 tags: ["SPICE", "simulators"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

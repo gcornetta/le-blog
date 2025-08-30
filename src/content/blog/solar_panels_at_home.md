@@ -4,7 +4,7 @@ pubDate: 2021-09-12
 main: false
 featured: false
 description: "A step-by-step guide to installing small solar panels."
-categories: ["Energy","DIY"]
+categories: ["Energy"]
 tags: ["solar", "installation"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

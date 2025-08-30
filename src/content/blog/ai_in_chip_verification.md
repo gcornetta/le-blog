@@ -4,7 +4,7 @@ pubDate: 2021-07-25
 main: false
 featured: false
 description: "How artificial intelligence is speeding up chip verification workflows."
-categories: ["AI", "VLSI"]
+categories: ["VLSI"]
 tags: ["verification", "ML", "automation"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

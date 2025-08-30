@@ -4,7 +4,7 @@ pubDate: 2021-07-28
 main: false
 featured: false
 description: "The sources of noise in amplifiers and how to reduce them."
-categories: ["Analog", "RF"]
+categories: ["Analog"]
 tags: ["LNA", "noise"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

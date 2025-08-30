@@ -4,7 +4,7 @@ pubDate: 2021-02-08
 main: false
 featured: false
 description: "Classic and modern applications of operational amplifiers explained."
-categories: ["Analog", "Components"]
+categories: ["Analog"]
 tags: ["opamp", "circuits"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

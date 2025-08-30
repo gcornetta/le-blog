@@ -4,7 +4,7 @@ pubDate: 2021-04-29
 main: false
 featured: false
 description: "How to assemble your own portable power bank safely."
-categories: ["Energy", "DIY"]
+categories: ["Energy"]
 tags: ["battery", "chargers"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

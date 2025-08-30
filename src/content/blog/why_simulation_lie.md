@@ -4,7 +4,7 @@ pubDate: 2022-09-22
 main: false
 featured: false
 description: "Understanding the limitations of simulation results."
-categories: ["Simulation", "Research"]
+categories: ["Software"]
 tags: ["models", "errors"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

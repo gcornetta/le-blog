@@ -6,6 +6,7 @@ import PostCard from '../components/content/PostCard.astro';
 import BlogSearch from '../components/search/BlogSearch.astro';
 import FabMenu from '../components/ui/FabMenu.astro';
 import Pagination from '../components/ui/Pagination.astro';
+import Categories from '../components/filters/Categories.astro';
 
 import { getCollection } from 'astro:content';
 
@@ -21,16 +22,24 @@ const mainPost =
 // Non-main posts
 const others = posts.filter((p) => !(p.data?.main === true || p.data?.main === "true"));
 
-// URL params (future: tag/cat)
+// URL params (filters + pagination)
 const url = Astro.url;
+const cat = url.searchParams.get('cat') ?? '';
+
 const DEFAULT_PAGE_SIZE = Number(import.meta.env.PUBLIC_BLOG_PAGE_SIZE) || 9;
 const qsLimit = Number(url.searchParams.get('limit') ?? '');
 const PAGE_SIZE = Number.isFinite(qsLimit) && qsLimit > 0 ? qsLimit : DEFAULT_PAGE_SIZE;
 const currentPage = Math.max(1, Number(url.searchParams.get('page') ?? 1));
 
-// TODO: enable when you wire tags/categories on frontmatter
-const filtered = others;
+// Server-side category filter
+const filtered = others.filter(p => {
+  if (!cat) return true;
+  const arr = Array.isArray(p.data?.categories) ? p.data.categories : [];
+  // case-insensitive match
+  return arr.some(v => String(v).toLowerCase() === cat.toLowerCase());
+});
 
+// Pagination
 const totalItems = filtered.length;
 const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 const safePage = Math.min(currentPage, totalPages);
@@ -47,17 +56,23 @@ const othersPage = filtered.slice(start, end);
       <aside class="order-1 lg:order-2 lg:col-span-1">
         <div class="lg:sticky top-24">
           <BlogSearch apiPath="/api/v1/search/search-blog" />
+          <Categories source={others} />
         </div>
       </aside>
 
       <!-- LEFT (first 3 cols): Main + grid -->
       <div class="order-2 lg:order-1 lg:col-span-3 space-y-8">
         {mainPost && <MainPostCard post={mainPost} />}
-
-        <div id="posts-grid" class="grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
-          {othersPage.map((p) => <PostCard post={p} />)}
+        <div
+          id="posts-grid"
+          class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
+        >
+          {othersPage.map((p) => (
+            <div class="h-full">
+              <PostCard post={p} />
+            </div>
+          ))}
         </div>
-
         {totalPages > 1 && (
           <div class="mt-6 flex justify-center">
             <Pagination
@@ -69,7 +84,6 @@ const othersPage = filtered.slice(start, end);
           </div>
         )}
       </div>
-
     </div>
   </section>
 
@@ -125,6 +139,42 @@ const othersPage = filtered.slice(start, end);
 
       window.addEventListener('popstate', () => window.location.reload());
     })();
+
+      (function () {
+    const grid = document.getElementById('posts-grid');
+    if (!grid) return;
+
+    const debounce = (fn, d=100) => {
+      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), d); };
+    };
+
+    function equalizeCards() {
+      const cards = grid.querySelectorAll('.card');
+      if (!cards.length) return;
+      // reset first (in case content changed)
+      cards.forEach(c => { c.style.minHeight = ''; });
+      let maxH = 0;
+      cards.forEach(c => { maxH = Math.max(maxH, c.offsetHeight); });
+      cards.forEach(c => { c.style.minHeight = maxH + 'px'; });
+    }
+
+    // Run on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', equalizeCards, { once: true });
+    } else {
+      equalizeCards();
+    }
+
+    // Run on resize
+    window.addEventListener('resize', debounce(equalizeCards, 120));
+
+    // Re-run when the grid content changes (e.g., after pagination/filter)
+    const mo = new MutationObserver(debounce(equalizeCards, 60));
+    mo.observe(grid, { childList: true, subtree: true });
+
+    // If you have a custom event after pagination swap, hook it too:
+    window.addEventListener('pagination:change', () => setTimeout(equalizeCards, 0));
+  })();
   </script>
 </BlogLayout>
 

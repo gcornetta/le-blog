@@ -4,7 +4,7 @@ pubDate: 2021-06-12
 main: false
 featured: false
 description: "An overview of what the next generation of wireless could bring."
-categories: ["RF", "Communications"]
+categories: ["RF"]
 tags: ["wireless", "cellular"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

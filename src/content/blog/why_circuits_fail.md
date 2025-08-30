@@ -4,7 +4,7 @@ pubDate: 2022-10-22
 main: false
 featured: false
 description: "A quick look at the most common reasons electronic circuits stop working and how to prevent them."
-categories: ["Electronics", "Troubleshooting"]
+categories: ["Electronics"]
 tags: ["failure", "repair", "testing"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

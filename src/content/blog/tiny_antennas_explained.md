@@ -4,7 +4,7 @@ pubDate: 2021-03-22
 main: false
 featured: false
 description: "How nano-antennas work and why they matter for the future of wireless."
-categories: ["RF", "Nanotech"]
+categories: ["RF"]
 tags: ["antennas", "wireless"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

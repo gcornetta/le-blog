@@ -4,7 +4,7 @@ pubDate: 2021-07-22
 main: false
 featured: false
 description: "Why open process design kits are transforming chip design."
-categories: ["CAD", "Software"]
+categories: ["Software"]
 tags: ["open-source", "chips"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

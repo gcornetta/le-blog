@@ -4,7 +4,7 @@ pubDate: 2021-02-18
 main: false
 featured: false
 description: "Affordable ways to bring automation into your home."
-categories: ["IoT", "Lifestyle"]
+categories: ["IoT"]
 tags: ["domotics", "automation"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

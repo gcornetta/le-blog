@@ -4,7 +4,7 @@ pubDate: 2021-01-22
 main: false
 featured: false
 description: "Key principles for beginners in radio-frequency design."
-categories: ["RF", "Education"]
+categories: ["RF"]
 tags: ["RF", "circuits", "basics"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

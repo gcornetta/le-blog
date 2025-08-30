@@ -4,7 +4,7 @@ pubDate: 2021-05-18
 main: false
 featured: false
 description: "How astronomers discover planets around other stars"
-categories: ["Software", "Education"]
+categories: ["Software"]
 tags: ["simulators", "circuits"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

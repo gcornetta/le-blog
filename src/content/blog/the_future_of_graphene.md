@@ -4,7 +4,7 @@ pubDate: 2021-01-07
 main: false
 featured: false
 description: "How graphene is shaping next-gen devices in energy, sensors, and flexible electronics."
-categories: ["Nanotech","Materials"]
+categories: ["Electronics"]
 tags: ["graphene", "research"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png

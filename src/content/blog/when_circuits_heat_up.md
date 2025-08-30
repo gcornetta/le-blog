@@ -4,7 +4,7 @@ pubDate: 2021-07-12
 main: false
 featured: false
 description: "Thermal issues in circuits and how to manage heat safely."
-categories: ["Electronics", "Safety"]
+categories: ["Electronics"]
 tags: ["reliability", "circuits"]
 author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
