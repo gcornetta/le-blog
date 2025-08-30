@@ -1,12 +1,12 @@
 ---
-title: "The Search for Exoplanets"
-pubDate: 2023-09-22
+title: "From Data to Insights"
+pubDate: 2021-05-22
 main: false
-featured: true
-description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
-tags: ["exoplanets", "research", "space-telescopes"]
-author: "Prof. Michael Chen"
+featured: false
+description: "Turning raw experimental data into actionable design insights."
+categories: ["AI", "Data"]
+tags: ["ML", "analytics"]
+author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
@@ -24,4 +24,3 @@ Since the first exoplanet discovery in 1992...
 - **Transit Photometry**
 - **Radial Velocity**
 - **Direct Imaging**
-

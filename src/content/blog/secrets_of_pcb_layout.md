@@ -1,12 +1,12 @@
 ---
-title: "The Search for Exoplanets"
-pubDate: 2023-09-22
+title: "Secrets of PCB Layout"
+pubDate: 2021-04-06
 main: false
-featured: true
-description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
-tags: ["exoplanets", "research", "space-telescopes"]
-author: "Prof. Michael Chen"
+featured: false
+description: "Practical layout rules that make or break a printed circuit board."
+categories: ["Electronics", "Design"]
+tags: ["PCB", "layout"]
+author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
@@ -24,4 +24,3 @@ Since the first exoplanet discovery in 1992...
 - **Transit Photometry**
 - **Radial Velocity**
 - **Direct Imaging**
-

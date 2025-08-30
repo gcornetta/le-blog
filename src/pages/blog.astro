@@ -5,6 +5,7 @@ import MainPostCard from '../components/content/MainPostCard.astro';
 import PostCard from '../components/content/PostCard.astro';
 import BlogSearch from '../components/search/BlogSearch.astro';
 import FabMenu from '../components/ui/FabMenu.astro';
+import Pagination from '../components/ui/Pagination.astro';
 
 import { getCollection } from 'astro:content';
 
@@ -20,37 +21,110 @@ const mainPost =
 // Non-main posts
 const others = posts.filter((p) => !(p.data?.main === true || p.data?.main === "true"));
 
-// Configurable page size for non-main posts
+// URL params (future: tag/cat)
+const url = Astro.url;
 const DEFAULT_PAGE_SIZE = Number(import.meta.env.PUBLIC_BLOG_PAGE_SIZE) || 9;
-const qsLimit = Number(Astro.url?.searchParams.get('limit') ?? '');
+const qsLimit = Number(url.searchParams.get('limit') ?? '');
 const PAGE_SIZE = Number.isFinite(qsLimit) && qsLimit > 0 ? qsLimit : DEFAULT_PAGE_SIZE;
+const currentPage = Math.max(1, Number(url.searchParams.get('page') ?? 1));
 
-const othersLimited = others.slice(0, PAGE_SIZE);
+// TODO: enable when you wire tags/categories on frontmatter
+const filtered = others;
+
+const totalItems = filtered.length;
+const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+const safePage = Math.min(currentPage, totalPages);
+const start = (safePage - 1) * PAGE_SIZE;
+const end = start + PAGE_SIZE;
+const othersPage = filtered.slice(start, end);
 ---
+
 <BlogLayout title="Learnelectronics Blog" description="Latest articles and updates">
   <section class="not-prose">
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start" id="blog-paged">
 
-      <!-- RIGHT (4th col): Search (on top for mobile, sticky on lg+) -->
+      <!-- RIGHT (4th col): Search -->
       <aside class="order-1 lg:order-2 lg:col-span-1">
         <div class="lg:sticky top-24">
           <BlogSearch apiPath="/api/v1/search/search-blog" />
         </div>
       </aside>
 
-      <!-- LEFT (first 3 cols): Main card + 3-up grid of non-main posts -->
+      <!-- LEFT (first 3 cols): Main + grid -->
       <div class="order-2 lg:order-1 lg:col-span-3 space-y-8">
         {mainPost && <MainPostCard post={mainPost} />}
 
-        <!-- Non-main posts grid: auto-fit with a min width; falls back to 2 per row when tight -->
-        <div class="grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
-          {othersLimited.map((p) => <PostCard post={p} />)}
+        <div id="posts-grid" class="grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
+          {othersPage.map((p) => <PostCard post={p} />)}
         </div>
+
+        {totalPages > 1 && (
+          <div class="mt-6 flex justify-center">
+            <Pagination
+              totalPages={totalPages}
+              initialPage={safePage}
+              queryParam="page"
+              autoNavigate={false}
+            />
+          </div>
+        )}
       </div>
 
     </div>
   </section>
-  <FabMenu />
-</BlogLayout>
 
+  <FabMenu />
+
+  <!-- Hybrid enhancement: swap grid + single pager, no duplicates -->
+  <script is:raw>
+    (function () {
+      const root = document.getElementById('blog-paged');
+      if (!root) return;
+      let isNavigating = false;
+
+      function buildURL(page) {
+        const u = new URL(window.location.href);
+        u.searchParams.set('page', String(page));
+        return u.toString();
+      }
+
+      async function swapTo(url) {
+        if (isNavigating) return;
+        isNavigating = true;
+        try {
+          const html = await fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then(r => r.text());
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+
+          const nextGrid = doc.querySelector('#posts-grid');
+          const curGrid  = root.querySelector('#posts-grid');
+          if (nextGrid && curGrid) curGrid.replaceWith(nextGrid);
+
+          // Replace the single bottom pager
+          const nextPagerWrap = doc.querySelector('.mt-6.flex.justify-center');
+          const curPagerWrap  = root.querySelector('.mt-6.flex.justify-center');
+          if (nextPagerWrap && curPagerWrap) curPagerWrap.replaceWith(nextPagerWrap);
+
+          window.history.pushState({}, '', url);
+          // Smooth scroll to the very top of the page
+          window.requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          });
+        } catch (err) {
+          console.error('Hybrid pagination failed, fallback to navigation.', err);
+          window.location.assign(url);
+        } finally {
+          isNavigating = false;
+        }
+      }
+
+      window.addEventListener('pagination:change', (e) => {
+        const { page, userInitiated } = e.detail || {};
+        if (!userInitiated) return; // only respond to clicks
+        swapTo(buildURL(page));
+      });
+
+      window.addEventListener('popstate', () => window.location.reload());
+    })();
+  </script>
+</BlogLayout>
 

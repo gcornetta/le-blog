@@ -1,0 +1,137 @@
+---
+const {
+  totalPages,
+  initialPage = 1,
+  queryParam = 'page',
+  autoNavigate = true,
+  emitOnInit = false,
+} = Astro.props;
+
+const safeTotal = Math.max(1, Number(totalPages ?? 1));
+const safeInitial = Math.min(Math.max(1, Number(initialPage ?? 1)), safeTotal);
+---
+
+<div
+  x-data={`paginationComponent(${JSON.stringify({
+    totalPages: safeTotal,
+    initialPage: safeInitial,
+    queryParam,
+    autoNavigate,
+    emitOnInit,
+  })})`}
+  x-init="init()"
+  x-cloak
+  class="w-full flex items-center justify-center"
+>
+  <!-- ONE ROW: Prev + pages + Next -->
+  <div class="join">
+    <!-- Prev (hidden on page 1) -->
+    <button
+      class="join-item btn btn-outline border-base-300"
+      x-show="currentPage > 1"
+      @click="prev()"
+      aria-label="Previous page"
+    >Prev</button>
+
+    <!-- FULL (<=5) -->
+    <template x-if="totalPages <= 5">
+      <div class="contents">
+        <template x-for="n in totalPages" :key="`p${n}`">
+          <button
+            class="join-item btn"
+            :class="currentPage === n
+              ? 'btn-primary'
+              : 'btn-outline border-base-300'"
+            x-text="n"
+            @click="goTo(n)"
+            :aria-current="currentPage === n ? 'page' : null"
+            :aria-label="`Go to page ${n}`"
+          ></button>
+        </template>
+      </div>
+    </template>
+
+    <!-- COMPACT (>5): 1, 2, …, last -->
+    <template x-if="totalPages > 5">
+      <div class="contents">
+        <button
+          class="join-item btn"
+          :class="currentPage === 1 ? 'btn-primary' : 'btn-outline border-base-300'"
+          @click="goTo(1)"
+          aria-label="Go to page 1"
+        >1</button>
+
+        <button
+          class="join-item btn"
+          :class="currentPage === 2 ? 'btn-primary' : 'btn-outline border-base-300'"
+          @click="goTo(2)"
+          aria-label="Go to page 2"
+        >2</button>
+
+        <button class="join-item btn btn-disabled border-base-300" disabled aria-hidden="true">…</button>
+
+        <button
+          class="join-item btn"
+          :class="currentPage === totalPages ? 'btn-primary' : 'btn-outline border-base-300'"
+          @click="goTo(totalPages)"
+          x-text="totalPages"
+          :aria-label="`Go to page ${totalPages}`"
+        ></button>
+      </div>
+    </template>
+
+    <!-- Next (hidden on last page) -->
+    <button
+      class="join-item btn btn-outline border-base-300"
+      x-show="currentPage < totalPages"
+      @click="next()"
+      aria-label="Next page"
+    >Next</button>
+  </div>
+</div>
+
+<script is:raw>
+  function paginationComponent({ totalPages, initialPage = 1, queryParam = 'page', autoNavigate = true, emitOnInit = false }) {
+    return {
+      totalPages,
+      currentPage: 1,
+      queryParam,
+      autoNavigate,
+      emitOnInit,
+
+      init() {
+        const url = new URL(window.location.href);
+        const fromURL = parseInt(url.searchParams.get(this.queryParam) || `${initialPage}`, 10);
+        this.currentPage = this._clamp(fromURL);
+        if (this.emitOnInit) this._emit(false);
+      },
+
+      prev() { if (this.currentPage > 1) this.goTo(this.currentPage - 1, true); },
+      next() { if (this.currentPage < this.totalPages) this.goTo(this.currentPage + 1, true); },
+      goTo(n, user = true) {
+        this.currentPage = this._clamp(n);
+        this._syncURL(user);
+        this._emit(user);
+      },
+
+      _clamp(n) { return Math.min(Math.max(1, Number.isFinite(n) ? n : 1), this.totalPages); },
+
+      _syncURL(userInitiated) {
+        if (!this.autoNavigate) return;
+        const url = new URL(window.location.href);
+        url.searchParams.set(this.queryParam, String(this.currentPage));
+        if (userInitiated) window.location.assign(url.toString());
+      },
+
+      _emit(userInitiated) {
+        window.dispatchEvent(new CustomEvent('pagination:change', {
+          detail: { page: this.currentPage, userInitiated: !!userInitiated }
+        }));
+      },
+    };
+  }
+</script>
+
+<style is:global>
+  [x-cloak]{display:none!important;}
+</style>

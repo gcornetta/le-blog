@@ -1,12 +1,12 @@
 ---
-title: "The Search for Exoplanets"
-pubDate: 2023-09-22
+title: "AI in Chip Verification"
+pubDate: 2021-07-25
 main: false
-featured: true
-description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
-tags: ["exoplanets", "research", "space-telescopes"]
-author: "Prof. Michael Chen"
+featured: false
+description: "How artificial intelligence is speeding up chip verification workflows."
+categories: ["AI", "VLSI"]
+tags: ["verification", "ML", "automation"]
+author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
@@ -24,4 +24,3 @@ Since the first exoplanet discovery in 1992...
 - **Transit Photometry**
 - **Radial Velocity**
 - **Direct Imaging**
-

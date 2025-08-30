@@ -1,12 +1,12 @@
 ---
-title: "The Search for Exoplanets"
-pubDate: 2023-09-22
+title: "Learning Git the Easy Way"
+pubDate: 2021-05-08
 main: false
-featured: true
-description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
-tags: ["exoplanets", "research", "space-telescopes"]
-author: "Prof. Michael Chen"
+featured: false
+description: "A beginner-friendly introduction to Git for managing software projects."
+categories: ["Software", "Workflow"]
+tags: ["git", "versioning", "devOps"]
+author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
@@ -24,4 +24,3 @@ Since the first exoplanet discovery in 1992...
 - **Transit Photometry**
 - **Radial Velocity**
 - **Direct Imaging**
-

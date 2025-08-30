@@ -3,7 +3,8 @@ title: "Exploring the Orion Nebula"
 pubDate: 2023-10-15
 main: false
 featured: true
-description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth"
+description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth."
+categories: ["Astronomy", "Space"]
 tags: ["astrophotography", "nebulae", "beginner"]
 author: "Dr. Sarah Johnson"
 avatarImage: ../../assets/images/authors/gcornetta.png

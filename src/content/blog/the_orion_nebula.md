@@ -3,7 +3,8 @@ title: "The Orion Nebula"
 pubDate: 2020-10-15
 main: false
 featured: false
-description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth"
+description: "A deep dive into one of the most spectacular deep-sky objects visible from Earth."
+categories: ["Astronomy", "Space"]
 tags: ["astrophotography", "nebulae"]
 author: "Dr. Sarah Parker"
 avatarImage: ../../assets/images/authors/gcornetta.png

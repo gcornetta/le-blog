@@ -3,7 +3,8 @@ title: "The Orion Nebula Once Again"
 pubDate: 2023-10-15
 main: true
 featured: false
-description: "Another deep dive into one of the most spectacular deep-sky objects visible from Earth"
+description: "Another deep dive into one of the most spectacular deep-sky objects visible from Earth."
+categories: ["Astronomy", "Space"]
 tags: ["astrophotography", "nebulae", "beginner"]
 author: "Dr. Gianluca Cornetta"
 avatarImage: ../../assets/images/authors/gcornetta.png

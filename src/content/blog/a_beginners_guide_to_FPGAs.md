@@ -1,12 +1,12 @@
 ---
-title: "The Search for Exoplanets"
-pubDate: 2023-09-22
+title: "A Beginner’s Guide to FPGAs"
+pubDate: 2021-04-18
 main: false
-featured: true
-description: "How astronomers discover planets around other stars."
-categories: ["Astronomy", "Space"]
-tags: ["exoplanets", "research", "space-telescopes"]
-author: "Prof. Michael Chen"
+featured: false
+description: "A simple path to understanding field-programmable gate arrays."
+categories: ["Digital", "Education"]
+tags: ["FPGAs", "HDL", "programming"]
+author: "Prof. Lily Chen"
 avatarImage: ../../assets/images/authors/gcornetta.png
 heroImage: ../../assets/images/blog/orion-nebula.jpg
 ---
@@ -24,4 +24,3 @@ Since the first exoplanet discovery in 1992...
 - **Transit Photometry**
 - **Radial Velocity**
 - **Direct Imaging**
-
