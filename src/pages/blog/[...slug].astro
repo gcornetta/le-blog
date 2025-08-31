@@ -1,0 +1,27 @@
+---
+// src/pages/blog/[...slug].astro
+// renders /blog/2025/07/my-post from src/content/blog/2025/07/my-post.md
+import { getCollection } from "astro:content";
+import BlogPost from "../../layouts/BlogPost.astro";
+
+const { slug } = Astro.params;
+const contentSlug = (Array.isArray(slug) ? slug : [slug]).filter(Boolean).join("/");
+
+const posts = await getCollection(
+  "blog",
+  ({ data }) => (import.meta.env.PROD ? !data?.draft : true)
+);
+
+const post = posts.find((p) => p.slug === contentSlug);
+
+// Return a proper 404 for this route only, so other routes still work
+if (!post) {
+  return new Response("Not found", { status: 404 });
+}
+
+const { data: frontmatter } = post;
+const { Content } = await post.render();
+---
+<BlogPost frontmatter={frontmatter}>
+  <Content />
+</BlogPost>

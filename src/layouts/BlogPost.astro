@@ -3,6 +3,8 @@
 const { frontmatter = { title: 'Untitled', description: '', pubDate: new Date(), tags: [] } } = Astro.props;
 import Header from '../components/content/Header.astro';
 import Footer from '../components/content/Footer.astro';
+
+import '../styles/global.css'; 
 ---
 <html lang="en" class="scroll-smooth">
   <head>

@@ -1,0 +1,229 @@
+---
+// src/pages/blog/index.astro
+import BlogLayout from '../../layouts/BlogLayout.astro';
+import MainPostCard from '../../components/content/MainPostCard.astro';
+import PostCard from '../../components/content/PostCard.astro';
+import BlogSearch from '../../components/search/BlogSearch.astro';
+import FabMenu from '../../components/ui/FabMenu.astro';
+import Pagination from '../../components/ui/Pagination.astro';
+import Categories from '../../components/filters/Categories.astro';
+import TagsFilter from '../../components/filters/TagsFilter.astro';
+import MostReadPosts from '../../components/content/MostReadPosts.astro';
+
+import { getCollection } from 'astro:content';
+
+// Load posts (skip drafts in PROD)
+const posts = (await getCollection('blog', ({ data }) => (
+  import.meta.env.PROD ? !data.draft : true
+))).sort((a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate));
+
+// Main post
+const mainPost =
+  posts.find((p) => p.data?.main === true || p.data?.main === "true") ?? posts[0];
+
+// Non-main posts
+const others = posts.filter((p) => !(p.data?.main === true || p.data?.main === "true"));
+
+// URL params (filters + pagination)
+const url = Astro.url;
+const cat = url.searchParams.get('cat') ?? '';
+const tagsParam = url.searchParams.get('tags') ?? '';
+const selectedTags = tagsParam
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+// Server-side category filter (case-insensitive)
+const filtered = others.filter(p => {
+  if (!cat) return true;
+  const arr = Array.isArray(p.data?.categories) ? p.data.categories : [];
+  return arr.some(v => String(v).toLowerCase() === cat.toLowerCase());
+});
+
+// Apply tag filter (ANY-match, case-insensitive) BEFORE pagination
+const filteredByTags = selectedTags.length
+  ? filtered.filter(p => {
+      const t = Array.isArray(p.data?.tags) ? p.data.tags : [];
+      if (!t.length) return false;
+      const set = new Set(t.map(x => String(x).trim().toLowerCase()));
+      return selectedTags.some(sel => set.has(String(sel).trim().toLowerCase()));
+    })
+  : filtered;
+
+// Build unique, sorted tag list from front-matter (for the widget)
+const tagSet = new Set<string>();
+for (const p of posts) {
+  const tags = Array.isArray(p.data?.tags) ? p.data.tags : [];
+  tags.forEach(t => tagSet.add(String(t).trim()));
+}
+const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+
+// Pagination over the server-filtered list
+const DEFAULT_PAGE_SIZE = Number(import.meta.env.PUBLIC_BLOG_PAGE_SIZE) || 9;
+const qsLimit = Number(url.searchParams.get('limit') ?? '');
+const PAGE_SIZE = Number.isFinite(qsLimit) && qsLimit > 0 ? qsLimit : DEFAULT_PAGE_SIZE;
+const currentPage = Math.max(1, Number(url.searchParams.get('page') ?? 1));
+
+const totalItems = filteredByTags.length;
+const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+const safePage = Math.min(currentPage, totalPages);
+const start = (safePage - 1) * PAGE_SIZE;
+const end = start + PAGE_SIZE;
+const othersPage = filteredByTags.slice(start, end);
+---
+
+<BlogLayout title="Learnelectronics Blog" description="Latest articles and updates">
+  <section
+    class="not-prose"
+    id="blog-paged"
+    x-data="tagsFilter"
+    x-init="init([${allTags.map(t => JSON.stringify(t)).join(',')}])"
+  >
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <!-- RIGHT (4th col): Search + Categories + Tags -->
+      <aside class="order-1 lg:order-2 lg:col-span-1">
+        <div class="lg:sticky top-24 space-y-6">
+          <BlogSearch apiPath="/api/v1/search/search-blog" />
+          <Categories source={others} />
+          <TagsFilter allTags={allTags} />
+          <MostReadPosts />
+        </div>
+      </aside>
+
+      <!-- LEFT (first 3 cols): Main + grid -->
+      <div class="order-2 lg:order-1 lg:col-span-3 space-y-8">
+        {mainPost && <MainPostCard post={mainPost} />}
+
+        <!-- Equal-height per row via pure CSS: items-stretch + card.h-full -->
+        <div id="posts-grid" class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+          {othersPage.map((p) => {
+            const tags = (Array.isArray(p.data?.tags) ? p.data.tags : []).map(t => String(t).trim());
+            const csv = tags.join(',');
+            return (
+              <div class="h-full" data-tags={csv}>
+                <PostCard post={p} />
+              </div>
+            );
+          })}
+        </div>
+
+        {totalPages > 1 && (
+          <div class="mt-6 flex justify-center">
+            <Pagination
+              totalPages={totalPages}
+              initialPage={safePage}
+              queryParam="page"
+              autoNavigate={false}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <FabMenu />
+
+  <!-- Hybrid enhancement: swap grid + single pager, no duplicates -->
+  <script is:raw>
+    (function () {
+      const root = document.getElementById('blog-paged');
+      if (!root) return;
+      let isNavigating = false;
+
+      function buildURL(page) {
+        const u = new URL(window.location.href);
+        u.searchParams.set('page', String(page)); // preserves ?tags=...
+        return u.toString();
+      }
+
+      async function swapTo(url) {
+        if (isNavigating) return;
+        isNavigating = true;
+        try {
+          const html = await fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then(r => r.text());
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+
+          const nextGrid = doc.querySelector('#posts-grid');
+          const curGrid  = root.querySelector('#posts-grid');
+          if (nextGrid && curGrid) {
+            curGrid.replaceWith(nextGrid);
+            if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+              window.Alpine.initTree(nextGrid);
+            }
+          }
+
+          const nextPagerWrap = doc.querySelector('.mt-6.flex.justify-center');
+          const curPagerWrap  = root.querySelector('.mt-6.flex.justify-center');
+          if (nextPagerWrap && curPagerWrap) curPagerWrap.replaceWith(nextPagerWrap);
+
+          window.history.pushState({}, '', url);
+          window.requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          });
+        } catch (err) {
+          console.error('Hybrid pagination failed, fallback to navigation.', err);
+          window.location.assign(url);
+        } finally {
+          isNavigating = false;
+        }
+      }
+
+      window.addEventListener('pagination:change', (e) => {
+        const { page, userInitiated } = e.detail || {};
+        if (!userInitiated) return; // only respond to clicks
+        swapTo(buildURL(page));
+      });
+
+      window.addEventListener('popstate', () => window.location.reload());
+    })();
+  </script>
+
+  <!-- Alpine component: reads/writes ?tags=..., preselects badges from URL -->
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('tagsFilter', () => ({
+        allTags: [],
+        selected: new Set(),    // normalized (lowercased) keys
+        error: '',
+
+        norm(t) { return String(t).trim().toLowerCase(); },
+
+        init(tags) {
+          this.allTags = Array.isArray(tags) ? tags : [];
+          const q = new URL(window.location.href).searchParams.get('tags') || '';
+          q.split(',').map(s => s.trim()).filter(Boolean).forEach(t => this.selected.add(this.norm(t)));
+        },
+
+        toggle(tag) {
+          this.error = '';
+          const k = this.norm(tag);
+          this.selected.has(k) ? this.selected.delete(k) : this.selected.add(k);
+        },
+
+        isSelected(tag) {
+          return this.selected.has(this.norm(tag));
+        },
+
+        apply() {
+          if (this.selected.size === 0) {
+            this.error = 'Select at least one tag before applying the filter.';
+            return;
+          }
+          const u = new URL(window.location.href);
+          u.searchParams.set('tags', Array.from(this.selected).join(',')); // case-insensitive on server
+          u.searchParams.set('page', '1');
+          window.location.assign(u.toString());
+        },
+
+        clear() {
+          const u = new URL(window.location.href);
+          u.searchParams.delete('tags');
+          u.searchParams.set('page', '1');
+          window.location.assign(u.toString());
+        }
+      }));
+    });
+  </script>
+</BlogLayout>
+
+
