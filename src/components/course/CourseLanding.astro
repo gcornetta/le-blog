@@ -2,6 +2,7 @@
 // File: src/components/course/CourseLanding.astro
 // Props: { course }
 import { Image } from "astro:assets";
+import { db, CourseVideos, Videos, eq, and } from 'astro:db';
 
 // Eager-import all course images as ImageMetadata (same pattern as FeaturedCourses.astro)
 const courseImageModules = import.meta.glob(
@@ -67,6 +68,42 @@ const fmt = new Intl.NumberFormat("en-US");
 const heroMeta = resolveCourseImage(course.heroImage);
 const avatarMeta = resolveCourseImage(course.avatar);
 
+
+const courseId =
+  typeof course?.id === 'number' && Number.isFinite(course.id) ? course.id : null;
+
+let trailer: any = null;
+let trailerSrc: string | null = null;
+
+try {
+  if (courseId !== null) {
+    const rows = await db
+      .select()
+      .from(CourseVideos)
+      .where(and(eq(CourseVideos.course_id, courseId), eq(CourseVideos.role, 'trailer')))
+      .orderBy(CourseVideos.order_index)
+      .limit(1);
+
+    const trailerRow = rows?.[0];
+
+    if (trailerRow?.video_id != null) {
+      const vRows = await db.select().from(Videos).where(eq(Videos.id, trailerRow.video_id)).limit(1);
+      const v = vRows?.[0];
+      if (v) {
+        trailer = { ...v, startAt: trailerRow.start_at ?? 0 };
+        trailerSrc =
+          `https://www.youtube-nocookie.com/embed/${v.youtubeId}` +
+          `?rel=0&modestbranding=1&playsinline=1` +
+          (trailer.startAt ? `&start=${trailer.startAt}` : '');
+      }
+    }
+  } else if (import.meta.env.DEV) {
+    console.warn("CourseLanding — missing course.id for", course?.slug ?? course?.title);
+
+  }
+} catch (err) {
+  console.error("CourseLanding trailer query failed:", err);
+}
 ---
 
 <section class="relative">
@@ -94,7 +131,7 @@ const avatarMeta = resolveCourseImage(course.avatar);
                   {avatarMeta ? (
                     <Image
                       src={avatarMeta}
-                      alt={course.instructor ? `${course.instructor} — instructor` : "Instructor avatar"}
+                      alt={course.instructor ? `${course.instructor} - instructor` : "Instructor avatar"}
                       width={96}
                       height={96}
                       class="w-full h-full object-cover"
@@ -103,7 +140,7 @@ const avatarMeta = resolveCourseImage(course.avatar);
                   ) : course.avatar ? (
                     <img
                       src={typeof course.avatar === "string" ? course.avatar : ""}
-                      alt={course.instructor ? `${course.instructor} — instructor` : "Instructor avatar"}
+                      alt={course.instructor ? `${course.instructor} - instructor` : "Instructor avatar"}
                       class="w-full h-full object-cover"
                       loading="eager"
                     />
@@ -202,18 +239,64 @@ const avatarMeta = resolveCourseImage(course.avatar);
     </div>
   </div>
 
-  <!-- WHAT YOU’LL LEARN -->
-  <div class="max-w-6xl mx-auto px-4 py-12" id="learn">
-    <h2 class="text-2xl font-bold">What you’ll learn</h2>
-    <ul class="mt-5 grid sm:grid-cols-2 gap-3">
-      {(course.outcomes ?? []).map((text: string) => (
-        <li class="flex items-start gap-3 p-4 rounded-xl bg-base-200">
-          <span class="text-xl">✅</span>
-          <span>{text}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
+<!-- TRAILER + WHAT YOU’LL LEARN -->
+<div class="max-w-6xl mx-auto px-4 py-12" id="trailer">
+  {trailer ? (
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <!-- Left: Trailer -->
+      <div>
+        <div class="card bg-base-100 shadow-xl overflow-hidden">
+          <div class="aspect-video">
+            <iframe
+              src={trailerSrc!}
+              title={trailer.title ?? "Course trailer"}
+              class="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              loading="lazy"
+            ></iframe>
+          </div>
+          <div class="card-body p-4">
+            <div class="flex items-center gap-2">
+              <span class="badge badge-primary">Trailer</span>
+              {trailer.duration && <span class="badge badge-ghost">{trailer.duration}</span>}
+            </div>
+            <h3 class="mt-2 font-semibold">{trailer.title}</h3>
+            {trailer.description && <p class="text-sm opacity-70">{trailer.description}</p>}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: What you’ll learn -->
+      <div id="learn">
+        <h2 class="text-2xl font-bold">What you’ll learn</h2>
+        <ul class="mt-5 grid gap-3">
+          {(course.outcomes ?? []).map((text: string) => (
+            <li class="flex items-start gap-3 p-4 rounded-xl bg-base-200">
+              <span class="text-xl">✅</span>
+              <span>{text}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  ) : (
+    <>
+      {/* Fallback: no trailer → show the classic Learn block full width */}
+      <div id="learn">
+        <h2 class="text-2xl font-bold">What you’ll learn</h2>
+        <ul class="mt-5 grid sm:grid-cols-2 gap-3">
+          {(course.outcomes ?? []).map((text: string) => (
+            <li class="flex items-start gap-3 p-4 rounded-xl bg-base-200">
+              <span class="text-xl">✅</span>
+              <span>{text}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  )}
+</div>
 
 <!-- SYLLABUS (bounded max width, accordion fills full space, numbered badges, expand/collapse all) -->
 <div class="max-w-6xl mx-auto px-4 pb-6" x-data="{ expandAll: false }" x-init="$nextTick(() => { $refs.syllabus.querySelectorAll('input[type=checkbox]').forEach(i => i.checked = false) })">
@@ -272,7 +355,7 @@ const avatarMeta = resolveCourseImage(course.avatar);
   <div class="max-w-6xl mx-auto px-4 py-10">
     <div class="card bg-primary text-primary-content">
       <div class="card-body md:flex md:items-center md:justify-between gap-6">
-        <div>
+        <div class="text-center">
           <h3 class="text-2xl font-bold">Ready to start?</h3>
           <p class="opacity-90">Jump in and complete your first module today.</p>
         </div>

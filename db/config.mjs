@@ -198,6 +198,57 @@ const Videos = defineTable({
   },
 });
 
+// Link videos to whole courses (e.g., trailer/promo + other resources)
+const CourseVideos = defineTable({
+  name: 'course_videos',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    course_id: column.number({ references: () => Courses.columns.id }),
+    video_id: column.number({ references: () => Videos.columns.id }),
+    role: column.text({ default: 'supplemental' }), // 'trailer' | 'supplemental' | 'overview' ...
+    order_index: column.number({ default: 1 }),
+    start_at: column.number({ optional: true }),     // seconds offset for deep-links
+  },
+  relations: () => ({
+    course: relations(Courses),
+    video: relations(Videos),
+  }),
+});
+
+// Link videos to specific syllabus items (modules/lessons)
+const ModuleVideos = defineTable({
+  name: 'module_videos',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    module_id: column.number({ references: () => CourseModules.columns.id }),
+    video_id: column.number({ references: () => Videos.columns.id }),
+    role: column.text({ default: 'lesson' }), // 'lesson' | 'extra' | 'solution' ...
+    order_index: column.number({ default: 1 }),
+    start_at: column.number({ optional: true }),
+  },
+  relations: () => ({
+    module: relations(CourseModules),
+    video: relations(Videos),
+  }),
+});
+
+// Link videos to blog posts by slug (your posts live in content files)
+const PostVideos = defineTable({
+  name: 'post_videos',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    post_slug: column.text({ references: () => PostStats.columns.slug }), // reuse PostStats PK
+    video_id: column.number({ references: () => Videos.columns.id }),
+    role: column.text({ default: 'embed' }),    // 'embed' | 'reference'
+    order_index: column.number({ default: 1 }),
+    start_at: column.number({ optional: true }),
+  },
+  relations: () => ({
+    video: relations(Videos),
+    // optional: relation to PostStats if you want
+  }),
+});
+
 // Post statistics
 const PostStats = defineTable({
   name: "post_stats",
@@ -223,5 +274,8 @@ export default defineDb({
     CourseMeta,
     CourseOutcomes,
     CourseModules,
+    CourseVideos,
+    ModuleVideos,
+    PostVideos,
   },
 });

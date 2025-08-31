@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 
-import { db, Admins, Users, Courses, Engagement, Videos, PostStats, CourseMeta, CourseOutcomes, CourseModules, eq } from 'astro:db';
+import { db, Admins, Users, Courses, Engagement, Videos, PostStats, CourseMeta, CourseOutcomes, CourseModules, CourseVideos, ModuleVideos, PostVideos, eq } from 'astro:db';
 import { faker } from '@faker-js/faker';
 
 
@@ -545,6 +545,69 @@ console.log("Courses + meta + outcomes + modules seeded.");
 ]);
 console.log("Videos seeded.");
 
+// --- CourseVideos & ModuleVideos ---
+console.log("Seeding CourseVideos & ModuleVideos…");
+
+// Ensure idempotent dev seeding
+await db.delete(CourseVideos);
+await db.delete(ModuleVideos);
+
+// Helpers
+const allVideos = await db.select().from(Videos);
+const videoIdExists = new Set(allVideos.map(v => v.id));
+const vid = (id) => (videoIdExists.has(id) ? id : null);
+
+// Rebuild course-id map (already have CID above)
+const modsCT = await db.select().from(CourseModules).where(eq(CourseModules.course_id, CID['circuit-theory']));
+const modsDE = await db.select().from(CourseModules).where(eq(CourseModules.course_id, CID['digital-electronics']));
+const modsAE = await db.select().from(CourseModules).where(eq(CourseModules.course_id, CID['analog-electronics']));
+const modsRF = await db.select().from(CourseModules).where(eq(CourseModules.course_id, CID['rf-and-microwave-electronics']));
+
+const mid = (mods, n) => mods.find(m => m.n === n)?.id;
+
+// --- Course-level videos (trailers/supplemental) ---
+const courseVideoRows = [
+  // Trailers (1 per course)
+  { course_id: CID['circuit-theory'],            video_id: vid(12), role: 'trailer',      order_index: 1 }, // Energy Scavenging Circuits
+  { course_id: CID['digital-electronics'],       video_id: vid(9),  role: 'trailer',      order_index: 1 }, // DRC and LVS Basics
+  { course_id: CID['analog-electronics'],        video_id: vid(11), role: 'trailer',      order_index: 1 }, // Capacitor Modeling
+  { course_id: CID['rf-and-microwave-electronics'], video_id: vid(7), role: 'trailer',    order_index: 1 }, // Rectenna Matching
+
+  // Supplemental
+  { course_id: CID['rf-and-microwave-electronics'], video_id: vid(6), role: 'supplemental', order_index: 2 }, // Metasurface intro
+  { course_id: CID['analog-electronics'],        video_id: vid(5),  role: 'supplemental', order_index: 2 }, // Charge Pump Simulation
+  { course_id: CID['digital-electronics'],       video_id: vid(10), role: 'supplemental', order_index: 2 }, // Layout from Scratch
+].filter(r => r.video_id != null);
+
+if (courseVideoRows.length) {
+  await db.insert(CourseVideos).values(courseVideoRows);
+  console.log(`Inserted ${courseVideoRows.length} CourseVideos.`);
+}
+
+// --- Module-level videos (lesson/extras) ---
+const moduleVideoRows = [
+  // Circuit Theory
+  mid(modsCT, 6)  && { module_id: mid(modsCT, 6),  video_id: vid(11), role: 'extra',   order_index: 1 }, // Transients ↔ Capacitor modeling
+  mid(modsCT, 7)  && { module_id: mid(modsCT, 7),  video_id: vid(5),  role: 'extra',   order_index: 2 }, // Phasors ↔ Charge pump
+
+  // Digital Electronics
+  mid(modsDE, 8)  && { module_id: mid(modsDE, 8),  video_id: vid(9),  role: 'extra',   order_index: 1 }, // Timing ↔ DRC/LVS
+  mid(modsDE, 9)  && { module_id: mid(modsDE, 9),  video_id: vid(10), role: 'extra',   order_index: 2 }, // Mini lab ↔ Layout
+
+  // Analog Electronics
+  mid(modsAE, 5)  && { module_id: mid(modsAE, 5),  video_id: vid(11), role: 'lesson',  order_index: 1 }, // Freq resp ↔ Capacitor modeling
+  mid(modsAE, 6)  && { module_id: mid(modsAE, 6),  video_id: vid(5),  role: 'extra',   order_index: 2 }, // Op-amp non-ideal ↔ Charge pump
+
+  // RF & Microwave
+  mid(modsRF, 1)  && { module_id: mid(modsRF, 1),  video_id: vid(6),  role: 'extra',   order_index: 1 }, // TL basics ↔ Metasurfaces intro
+  mid(modsRF, 3)  && { module_id: mid(modsRF, 3),  video_id: vid(7),  role: 'lesson',  order_index: 2 }, // Smith chart ↔ Matching networks
+].filter(Boolean);
+
+if (moduleVideoRows.length) {
+  await db.insert(ModuleVideos).values(moduleVideoRows);
+  console.log(`Inserted ${moduleVideoRows.length} ModuleVideos.`);
+}
+
 // --- PostStats Seeding (from filesystem; no astro:content) ---
 console.log("Seeding post view statistics (PostStats)…");
 
@@ -581,6 +644,26 @@ if (rawPosts.length === 0) {
   }
 }
 
+// --- PostVideos ---
+console.log("Seeding PostVideos…");
+await db.delete(PostVideos);
+
+const allPostStats = await db.select().from(PostStats);
+if (allPostStats.length === 0) {
+  console.log("No PostStats found; skipping PostVideos.");
+} else {
+  // Take top 3 posts by views and attach a relevant video
+  const topPosts = [...allPostStats].sort((a, b) => (b.views ?? 0) - (a.views ?? 0)).slice(0, 3);
+
+  const postVideoRows = [
+    topPosts[0] && { post_slug: topPosts[0].slug, video_id: 12, role: 'embed',     order_index: 1 }, // Energy Scavenging Circuits
+    topPosts[1] && { post_slug: topPosts[1].slug, video_id: 13, role: 'reference', order_index: 1 }, // Graphene Bandgap Engineering
+    topPosts[2] && { post_slug: topPosts[2].slug, video_id: 4,  role: 'embed',     order_index: 1 }, // AI-assisted Circuit Design
+  ].filter(Boolean);
+
+  await db.insert(PostVideos).values(postVideoRows);
+  console.log(`Inserted ${postVideoRows.length} PostVideos.`);
+}
 
   console.log("✅ Seed script finished.");
 }

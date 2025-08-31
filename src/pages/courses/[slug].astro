@@ -34,6 +34,7 @@ const modules = await db
 
 // Build the object that CourseLanding expects
 const course = {
+  id: courseRow.id,
   slug: courseRow.slug,
   title: courseRow.title,
   subtitle: courseRow.description, // you can split subtitle vs long desc later
