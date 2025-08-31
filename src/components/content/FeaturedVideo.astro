@@ -2,14 +2,14 @@
 import { Image } from 'astro:assets';
 import VideoModal from '../ui/VideoModal.astro';
 import VideoPlayer from '../ui/VideoPlayer.astro';
-import { db, FeaturedVideo, LatestVideos } from 'astro:db';
+import { db, FeaturedVideo, LatestVideos, desc } from 'astro:db';
 import thumbnails from '../../assets/thumbnailMap.mjs';
 
 // Featured video
 const featured = ( await db
   .select()
   .from(FeaturedVideo)
-  .orderBy('created_at', 'desc')
+  .orderBy(desc(FeaturedVideo.created_at))
   .limit(1)
 )[0];
 
@@ -17,7 +17,7 @@ const featured = ( await db
 const latestVideosRaw = await db
   .select()
   .from(LatestVideos)
-  .orderBy('date', 'desc')
+  .orderBy(desc(LatestVideos.created_at))
   .limit(12);
 
 const latestVideos = latestVideosRaw

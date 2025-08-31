@@ -132,6 +132,7 @@ const FeaturedVideo = defineTable({
     title: column.text(),
     description: column.text(),
     youtubeId: column.text(),
+    created_at: column.date({ default: NOW }),
   },
 });
 

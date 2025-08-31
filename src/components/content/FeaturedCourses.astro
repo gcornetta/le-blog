@@ -1,6 +1,69 @@
 ---
 // src/components/content/FeaturedCourses.astro
 import { db, Courses, eq, asc } from 'astro:db';
+import { Image } from 'astro:assets';
+
+// Eager-import all course images as ImageMetadata
+// Adjust the glob path if your folder differs.
+const courseImageModules = import.meta.glob(
+  '../../assets/images/courses/**/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true }
+);
+
+// Build a lookup map keyed by normalized "/images/…" path and by filename
+function normalizeKey(p) {
+  // Convert various forms to a canonical "/images/…" path
+  // Examples:
+  //   "/assets/images/courses/foo.jpg" -> "/images/courses/foo.jpg"
+  //   "images/courses/foo.jpg"         -> "/images/courses/foo.jpg"
+  //   "/images/courses/foo.jpg"        -> "/images/courses/foo.jpg"
+  //   "foo.jpg"                        -> just filename fallback
+  let s = p.replace(/\\/g, '/');
+  s = s.replace(/^.*\/assets\/images\//i, '/images/');
+  s = s.replace(/^images\//i, '/images/');
+  if (!s.startsWith('/images/')) s = s.startsWith('/') ? s : `/images/${s}`;
+  return s.toLowerCase();
+}
+
+const imageByPath = new Map();
+const imageByFile = new Map();
+
+for (const [key, mod] of Object.entries(courseImageModules)) {
+  // key looks like "../../assets/images/courses/…"
+  const meta = (mod as any).default ?? mod; // ImageMetadata
+  const canonical = normalizeKey(key.replace(/^.*\/assets\/images\//i, '/images/'));
+  imageByPath.set(canonical, meta);
+
+  const file = canonical.split('/').pop();
+  if (file) imageByFile.set(file.toLowerCase(), meta);
+}
+
+// Resolve DB string to ImageMetadata (or null)
+function resolveCourseImage(dbPath?: string) {
+  if (!dbPath) return null;
+  const candidates = new Set<string>();
+
+  // As-is normalization
+  candidates.add(normalizeKey(dbPath));
+
+  // If DB stored "/assets/images/…" ensure the stripped variant exists
+  if (/^\/assets\/images\//i.test(dbPath)) {
+    candidates.add(normalizeKey(dbPath.replace(/^\/assets/i, '')));
+  }
+
+  // If DB stored just a filename, try by filename
+  const fileOnly = dbPath.split('/').pop();
+  if (fileOnly) {
+    const meta = imageByFile.get(fileOnly.toLowerCase());
+    if (meta) return meta;
+  }
+
+  for (const c of candidates) {
+    const meta = imageByPath.get(c);
+    if (meta) return meta;
+  }
+  return null;
+}
 
 const courses = await db
   .select()
@@ -14,80 +77,99 @@ const courses = await db
   <h2 class="text-4xl font-semibold mb-8">Featured Courses</h2>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-{courses.map((course) => (
-      <div
-        class="card bg-base-100 border border-base-200 w-full rounded-box shadow-md hover:shadow-lg transition-shadow duration-300"
-        x-data="{ wideEnough: true }"
-        x-init="
-          wideEnough = $el.offsetWidth > 180;
-          new ResizeObserver(entries => {
-            for (const entry of entries) {
-              wideEnough = entry.contentRect.width > 300;
-            }
-          }).observe($el);
-        "
-      >
-        <figure class="aspect-video overflow-hidden">
-          <img
-            src={course.image}
-            alt={course.title}
-            class="w-full h-full object-cover"
-            loading="lazy"
-          />
-        </figure>
+    {courses.map((course) => {
+      const imgMeta = resolveCourseImage(course.image);
 
-        <div class="card-body flex flex-col gap-3">
-          <div class="flex items-center gap-1 flex-1 min-w-0">
+      return (
+        <div
+          class="card bg-base-100 border border-base-200 w-full rounded-box shadow-md hover:shadow-lg transition-shadow duration-300"
+          x-data="{ wideEnough: true }"
+          x-init="
+            wideEnough = $el.offsetWidth > 180;
+            new ResizeObserver(entries => {
+              for (const entry of entries) {
+                wideEnough = entry.contentRect.width > 300;
+              }
+            }).observe($el);
+          "
+        >
+          <figure class="aspect-video overflow-hidden">
+            {imgMeta ? (
+              <Image
+                src={imgMeta}
+                alt={course.title}
+                width={800}
+                height={450}
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              /* Fallback if a DB path can't be resolved to ImageMetadata */
+              <img
+                src={course.image}
+                alt={course.title}
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            )}
+          </figure>
+
+          <div class="card-body flex flex-col gap-3">
+            <div class="flex items-center gap-1 flex-1 min-w-0">
               <h3 class="card-title text-xl w-full">
                 <span class="truncate">{course.title}</span>
               </h3>
-          </div>
-          <div class="flex items-center justify-between text-sm text-base-content/70">
-            <span class="badge badge-outline badge-info lowercase">{course.level}</span>
-            <div class="flex items-center gap-1 italic" x-show="wideEnough">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 65.403 65.402"
-                class="w-4 h-4 fill-current"
-              >
-                <path d="M32.702,0C14.646,0,0,14.646,0,32.701c0,18.062,14.646,32.701,32.702,32.701c18.057,0,32.701-14.64,32.701-32.701 C65.403,14.646,50.758,0,32.702,0z M15.328,48.29c-0.985,0-1.785-0.794-1.785-1.779c0-0.652,0.367-1.195,0.896-1.505V28.707h1.779 v16.299c0.524,0.31,0.891,0.851,0.891,1.508C17.108,47.496,16.309,48.29,15.328,48.29z M47.971,41.876 c0,2.107-6.839,5.342-15.27,5.342c-8.43,0-15.27-3.234-15.27-5.342V31.351l15.27,5.452l15.27-5.452V41.876z M32.702,34.914 l-15.613-5.576l14.184-2.184c0.341,0.428,0.836,0.715,1.422,0.715c1.025,0,1.856-0.829,1.856-1.86c0-1.03-0.826-1.857-1.856-1.857 c-0.809,0-1.476,0.528-1.731,1.246l-17.396,2.677l-5.791-2.068l24.921-8.901l24.92,8.901L32.702,34.914z"/>
-              </svg>
-              <span>{course.instructor}</span>
             </div>
-          </div>
 
-          <!-- Rating -->
-          <div class="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill={course.rating >= i ? 'currentColor' : course.rating >= i - 0.5 ? 'url(#half)' : 'none'}
-                stroke="currentColor"
-                class="w-5 h-5 text-yellow-500"
-              >
-                <defs>
-                  <linearGradient id="half">
-                    <stop offset="50%" stop-color="currentColor" />
-                    <stop offset="50%" stop-color="transparent" />
-                  </linearGradient>
-                </defs>
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967h4.174c.969 0 1.371 1.24.588 1.81l-3.38 2.455 1.286 3.966c.3.922-.755 1.688-1.539 1.118L10 13.347l-3.37 2.456c-.783.57-1.838-.196-1.539-1.118l1.286-3.966-3.38-2.455c-.783-.57-.38-1.81.588-1.81h4.174L9.049 2.927z" />
-              </svg>
-            ))}
-          </div>
+            <div class="flex items-center justify-between text-sm text-base-content/70">
+              <span class="badge badge-outline badge-info lowercase">{course.level}</span>
+              <div class="flex items-center gap-1 italic" x-show="wideEnough">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 65.403 65.402"
+                  class="w-4 h-4 fill-current"
+                >
+                  <path d="M32.702,0C14.646,0,0,14.646,0,32.701c0,18.062,14.646,32.701,32.702,32.701c18.057,0,32.701-14.64,32.701-32.701 C65.403,14.646,50.758,0,32.702,0z M15.328,48.29c-0.985,0-1.785-0.794-1.785-1.779c0-0.652,0.367-1.195,0.896-1.505V28.707h1.779 v16.299c0.524,0.31,0.891,0.851,0.891,1.508C17.108,47.496,16.309,48.29,15.328,48.29z M47.971,41.876 c0,2.107-6.839,5.342-15.27,5.342c-8.43,0-15.27-3.234-15.27-5.342V31.351l15.27,5.452l15.27-5.452V41.876z M32.702,34.914 l-15.613-5.576l14.184-2.184c0.341,0.428,0.836,0.715,1.422,0.715c1.025,0,1.856-0.829,1.856-1.86c0-1.03-0.826-1.857-1.856-1.857 c-0.809,0-1.476,0.528-1.731,1.246l-17.396,2.677l-5.791-2.068l24.921-8.901l24.92,8.901L32.702,34.914z"/>
+                </svg>
+                <span>{course.instructor}</span>
+              </div>
+            </div>
 
-          <div class="relative border-l-4 border-primary pl-4 text-sm text-base-content/80 italic">
-            <p class="line-clamp-3">{course.excerpt}</p>
-          </div>
+            {/* Rating */}
+            <div class="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill={course.rating >= i ? 'currentColor' : course.rating >= i - 0.5 ? 'url(#half)' : 'none'}
+                  stroke="currentColor"
+                  class="w-5 h-5 text-yellow-500"
+                >
+                  <defs>
+                    <linearGradient id="half">
+                      <stop offset="50%" stop-color="currentColor" />
+                      <stop offset="50%" stop-color="transparent" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967h4.174c.969 0 1.371 1.24.588 1.81l-3.38 2.455 1.286 3.966c.3.922-.755 1.688-1.539 1.118L10 13.347l-3.37 2.456c-.783.57-1.838-.196-1.539-1.118l1.286-3.966-3.38-2.455c-.783-.57-.38-1.81.588-1.81h4.174L9.049 2.927z" />
+                </svg>
+              ))}
+            </div>
 
-          <div class="mt-auto pt-2 border-t border-base-200 text-sm flex justify-end items-center">
-            <div class="card-actions justify-end">
-              <a href={`/courses/${course.slug}`} class="btn btn-sm btn-primary hover:btn-secondary">Explore Course</a>
+            <div class="relative border-l-4 border-primary pl-4 text-sm text-base-content/80 italic">
+              <p class="line-clamp-3">{course.excerpt}</p>
+            </div>
+
+            <div class="mt-auto pt-2 border-t border-base-200 text-sm flex justify-end items-center">
+              <div class="card-actions justify-end">
+                <a href={`/courses/${course.slug}`} class="btn btn-sm btn-primary hover:btn-secondary">
+                  Explore Course
+                </a>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
   </div>
 </section>
