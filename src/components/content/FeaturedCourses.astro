@@ -1,11 +1,12 @@
 ---
 // src/components/content/FeaturedCourses.astro
-import { db, FeaturedCourses } from 'astro:db';
+import { db, Courses, eq, asc } from 'astro:db';
 
 const courses = await db
   .select()
-  .from(FeaturedCourses)
-  .orderBy('featured_order', 'asc')
+  .from(Courses)
+  .where(eq(Courses.featured, true))
+  .orderBy(asc(Courses.featured_order))
   .limit(4);
 ---
 

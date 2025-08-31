@@ -38,18 +38,6 @@ const Users = defineTable({
   }),
 });
 
-const Courses = defineTable({
-  name: 'courses',
-  columns: {
-    id: column.number({ primaryKey: true }),
-    title: column.text(),
-    description: column.text(),
-    created_at: column.date({ default: NOW }),
-  },
-  relations: () => ({
-    progress: relations(Progress),
-  }),
-});
 
 const Progress = defineTable({
   name: 'progress',
@@ -104,23 +92,37 @@ const BlockedIPs = defineTable({
 });
 
 /** FeaturedCourses table (normalized for your UI needs) */
-const FeaturedCourses = defineTable({
-  name: 'featured_courses',
+const Courses = defineTable({
+  name: 'courses',
   columns: {
     id: column.number({ primaryKey: true }),
-    // Optional reference to an existing course
-    course_id: column.number({ references: () => Courses.columns.id, optional: true }),
+
+    // NEW canonical route slug
     slug: column.text({ unique: true }),
-    title: column.text(),         // duplicate title for quick rendering / future decoupling
-    level: column.text(),         // 'beginner' | 'intermediate' | 'advanced'
+
+    // Existing
+    title: column.text(),
+    description: column.text(),
+
+    // Display / catalog fields
+    level: column.text(),               // e.g., 'beginner' | 'intermediate' | 'advanced'
     instructor: column.text(),
-    rating: column.number(),      // supports floats (e.g., 4.5)
+    rating: column.number({ default: 0 }),
     excerpt: column.text(),
-    image: column.text(),         // path like '/images/courses/...'
+    image: column.text(),               // path like '/images/courses/...'
+
+    // Feature flags
+    featured: column.boolean({ default: false }),
     featured_order: column.number({ default: 0 }),
+
     created_at: column.date({ default: NOW }),
   },
+  relations: () => ({
+    // unchanged relation (Progress → Courses)
+    progress: relations(Progress),
+  }),
 });
+
 
 // Single featured video (one row expected)
 const FeaturedVideo = defineTable({
@@ -167,7 +169,6 @@ export default defineDb({
     UnregisteredActivity,
     Engagement,
     BlockedIPs,
-    FeaturedCourses,
     FeaturedVideo,
     LatestVideos,
     PostStats,

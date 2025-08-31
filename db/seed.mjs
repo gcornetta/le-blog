@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 
-import { db, Admins, Users, Courses, Engagement, FeaturedCourses, FeaturedVideo, LatestVideos, PostStats } from 'astro:db';
+import { db, Admins, Users, Courses, Engagement, FeaturedVideo, LatestVideos, PostStats, eq } from 'astro:db';
 import { faker } from '@faker-js/faker';
 
 
@@ -66,7 +66,7 @@ export default async function seed() {
     if (!password_hash.startsWith('$2')) {
       console.warn('Warning: ADMIN_PASSWORD_HASH does not look like a bcrypt hash.');
     }
-    const existingAdmin = await db.select().from(Admins).where('email', '=', email);
+    const existingAdmin = await db.select().from(Admins).where(eq(Admins.email, email));
     if (existingAdmin.length > 0) {
       console.log(`Admin ${email} already exists; skipping creation.`);
     } else {
@@ -113,80 +113,143 @@ export default async function seed() {
   // --- Course Seeding ---
   console.log("Seeding courses...");
   const existingCourses = await db.select().from(Courses);
+
   if (existingCourses.length === 0) {
     await db.insert(Courses).values([
-      { id: 1, title: 'Circuit Theory', description: 'Understand the fundamentals of electric circuits.', created_at: faker.date.past({ months: 6 }) },
-      { id: 2, title: 'Digital Electronics', description: 'Dive into logic gates, flip-flops, finite state machines.', created_at: faker.date.past({ months: 4 }) },
-      { id: 3, title: 'Analog Electronics', description: 'Explore MOSFETs, opamps, and amplifiers.', created_at: faker.date.past({ months: 2 }) },
-      { id: 4, title: 'RF & Microwave Electronics', description: 'Analyze high-frequency circuit design principles.', created_at: faker.date.past({ months: 3 }) },
+      {
+        id: 1,
+        slug: 'circuit-theory',
+        title: 'Circuit Theory',
+        description: 'Understand the fundamentals of electric circuits.',
+        level: 'beginner',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.5,
+        excerpt:
+          'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
+        image: '/images/courses/circuit-theory.jpg',
+        featured: true,
+        featured_order: 1,
+        created_at: faker.date.past({ months: 6 }),
+      },
+      {
+        id: 2,
+        slug: 'digital-electronics',
+        title: 'Digital Electronics',
+        description: 'Dive into logic gates, flip-flops, finite state machines.',
+        level: 'intermediate',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.2,
+        excerpt:
+          'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
+        image: '/images/courses/digital-electronics.jpg',
+        featured: true,
+        featured_order: 2,
+        created_at: faker.date.past({ months: 4 }),
+      },
+      {
+        id: 3,
+        slug: 'analog-electronics',
+        title: 'Analog Electronics',
+        description: 'Explore MOSFETs, opamps, and amplifiers.',
+        level: 'intermediate',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.8,
+        excerpt:
+          'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
+        image: '/images/courses/analog-electronics.jpg',
+        featured: true,
+        featured_order: 3,
+        created_at: faker.date.past({ months: 2 }),
+      },
+      {
+        id: 4,
+        slug: 'rf-and-microwave-electronics',
+        title: 'RF & Microwave Electronics',
+        description: 'Analyze high-frequency circuit design principles.',
+        level: 'advanced',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.7,
+        excerpt:
+          'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
+        image: '/images/courses/rf-microwave.jpg',
+        featured: true,
+        featured_order: 4,
+        created_at: faker.date.past({ months: 3 }),
+      },
     ]);
-    console.log("Successfully seeded 4 courses.");
+    console.log("Successfully seeded 4 courses (all featured).");
   } else {
-    console.log("Courses already exist; skipping course seeding.");
+    // If rows already exist (e.g., from a prior seed), make them featured and backfill new fields.
+    console.log("Courses already exist; updating to ensure all are featured and have slugs/metadata…");
+
+    const backfills = [
+      {
+        title: 'Circuit Theory',
+        slug: 'circuit-theory',
+        level: 'beginner',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.5,
+        excerpt:
+          'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
+        image: '/images/courses/circuit-theory.jpg',
+        featured_order: 1,
+      },
+      {
+        title: 'Digital Electronics',
+        slug: 'digital-electronics',
+        level: 'intermediate',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.2,
+        excerpt:
+          'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
+        image: '/images/courses/digital-electronics.jpg',
+        featured_order: 2,
+      },
+      {
+        title: 'Analog Electronics',
+        slug: 'analog-electronics',
+        level: 'intermediate',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.8,
+        excerpt:
+          'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
+        image: '/images/courses/analog-electronics.jpg',
+        featured_order: 3,
+      },
+      {
+        title: 'RF & Microwave Electronics',
+        slug: 'rf-and-microwave-electronics',
+        level: 'advanced',
+        instructor: 'Dr. Gianluca Cornetta',
+        rating: 4.7,
+        excerpt:
+          'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
+        image: '/images/courses/rf-microwave.jpg',
+        featured_order: 4,
+      },
+    ];
+
+    for (const u of backfills) {
+      await db
+        .update(Courses)
+        .set({
+          slug: u.slug,
+          level: u.level,
+          instructor: u.instructor,
+          rating: u.rating,
+          excerpt: u.excerpt,
+          image: u.image,
+          featured: true,
+          featured_order: u.featured_order,
+        })
+        .where(eq(Courses.title, u.title));
+    }
+
+    // As a catch-all, ensure *every* existing course is featured
+    await db.update(Courses).set({ featured: true }).where(eq(Courses.featured, false));
+
+    console.log("Updated existing courses; all are featured and enriched.");
   }
-
-// --- Featured Courses Seeding ---
-console.log("Seeding featured courses...");
-await db.delete(FeaturedCourses);
-
-const courseByTitle = {};
-const allCourses = await db.select().from(Courses);
-for (const c of allCourses) courseByTitle[c.title] = c.id;
-
-const featuredPayload = [
-  {
-    id: 1,
-    course_id: courseByTitle['Circuit Theory'] ?? null,
-    slug: 'circuit-theory',
-    title: 'Circuit Theory',
-    level: 'beginner',
-    instructor: 'Dr. Gianluca Cornetta',
-    rating: 4.5,
-    excerpt: 'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
-    image: '/images/courses/circuit-theory.jpg',
-    featured_order: 1,
-  },
-  {
-    id: 2,
-    course_id: courseByTitle['Digital Electronics'] ?? null,
-    slug: 'digital-electronics',
-    title: 'Digital Electronics',
-    level: 'intermediate',
-    instructor: 'Dr. Gianluca Cornetta',
-    rating: 4.2,
-    excerpt: 'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
-    image: '/images/courses/digital-electronics.jpg',
-    featured_order: 2,
-  },
-  {
-    id: 3,
-    course_id: courseByTitle['Analog Electronics'] ?? null,
-    slug: 'analog-electronics',
-    title: 'Analog Electronics',
-    level: 'intermediate',
-    instructor: 'Dr. Gianluca Cornetta',
-    rating: 4.8,
-    excerpt: 'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
-    image: '/images/courses/analog-electronics.jpg',
-    featured_order: 3,
-  },
-  {
-    id: 4,
-    course_id: courseByTitle['RF & Microwave Electronics'] ?? null,
-    slug: 'rf-and-microwave-electronics',
-    title: 'RF & Microwave Electronics',
-    level: 'advanced',
-    instructor: 'Dr. Gianluca Cornetta',
-    rating: 4.7,
-    excerpt: 'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
-    image: '/images/courses/rf-microwave.jpg',
-    featured_order: 4,
-  },
-];
-
-await db.insert(FeaturedCourses).values(featuredPayload);
-console.log("Successfully seeded featured courses.");
-
 
   // --- Engagement Seeding ---
   console.log("Seeding engagement data...");
