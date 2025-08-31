@@ -110,6 +110,7 @@ const FeaturedCourses = defineTable({
     id: column.number({ primaryKey: true }),
     // Optional reference to an existing course
     course_id: column.number({ references: () => Courses.columns.id, optional: true }),
+    slug: column.text({ unique: true }),
     title: column.text(),         // duplicate title for quick rendering / future decoupling
     level: column.text(),         // 'beginner' | 'intermediate' | 'advanced'
     instructor: column.text(),

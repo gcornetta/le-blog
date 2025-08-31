@@ -125,63 +125,68 @@ export default async function seed() {
     console.log("Courses already exist; skipping course seeding.");
   }
 
-  // --- Featured Courses Seeding ---
-  console.log("Seeding featured courses...");
-  await db.delete(FeaturedCourses);
+// --- Featured Courses Seeding ---
+console.log("Seeding featured courses...");
+await db.delete(FeaturedCourses);
 
-  const courseByTitle = {};
-  const allCourses = await db.select().from(Courses);
-  for (const c of allCourses) courseByTitle[c.title] = c.id;
+const courseByTitle = {};
+const allCourses = await db.select().from(Courses);
+for (const c of allCourses) courseByTitle[c.title] = c.id;
 
-  const featuredPayload = [
-    {
-      id: 1,
-      course_id: courseByTitle['Circuit Theory'] ?? null,
-      title: 'Circuit Theory',
-      level: 'beginner',
-      instructor: 'Dr. Gianluca Cornetta',
-      rating: 4.5,
-      excerpt: 'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
-      image: '/images/courses/circuit-theory.jpg',
-      featured_order: 1,
-    },
-    {
-      id: 2,
-      course_id: courseByTitle['Digital Electronics'] ?? null,
-      title: 'Digital Electronics',
-      level: 'intermediate',
-      instructor: 'Dr. Gianluca Cornetta',
-      rating: 4.2,
-      excerpt: 'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
-      image: '/images/courses/digital-electronics.jpg',
-      featured_order: 2,
-    },
-    {
-      id: 3,
-      course_id: courseByTitle['Analog Electronics'] ?? null,
-      title: 'Analog Electronics',
-      level: 'intermediate',
-      instructor: 'Dr. Gianluca Cornetta',
-      rating: 4.8,
-      excerpt: 'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
-      image: '/images/courses/analog-electronics.jpg',
-      featured_order: 3,
-    },
-    {
-      id: 4,
-      course_id: courseByTitle['RF & Microwave Electronics'] ?? null,
-      title: 'RF & Microwave Electronics',
-      level: 'advanced',
-      instructor: 'Dr. Gianluca Cornetta',
-      rating: 4.7,
-      excerpt: 'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
-      image: '/images/courses/rf-microwave.jpg',
-      featured_order: 4,
-    },
-  ];
+const featuredPayload = [
+  {
+    id: 1,
+    course_id: courseByTitle['Circuit Theory'] ?? null,
+    slug: 'circuit-theory',
+    title: 'Circuit Theory',
+    level: 'beginner',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.5,
+    excerpt: 'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
+    image: '/images/courses/circuit-theory.jpg',
+    featured_order: 1,
+  },
+  {
+    id: 2,
+    course_id: courseByTitle['Digital Electronics'] ?? null,
+    slug: 'digital-electronics',
+    title: 'Digital Electronics',
+    level: 'intermediate',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.2,
+    excerpt: 'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
+    image: '/images/courses/digital-electronics.jpg',
+    featured_order: 2,
+  },
+  {
+    id: 3,
+    course_id: courseByTitle['Analog Electronics'] ?? null,
+    slug: 'analog-electronics',
+    title: 'Analog Electronics',
+    level: 'intermediate',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.8,
+    excerpt: 'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
+    image: '/images/courses/analog-electronics.jpg',
+    featured_order: 3,
+  },
+  {
+    id: 4,
+    course_id: courseByTitle['RF & Microwave Electronics'] ?? null,
+    slug: 'rf-and-microwave-electronics',
+    title: 'RF & Microwave Electronics',
+    level: 'advanced',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.7,
+    excerpt: 'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
+    image: '/images/courses/rf-microwave.jpg',
+    featured_order: 4,
+  },
+];
 
-  await db.insert(FeaturedCourses).values(featuredPayload);
-  console.log("Successfully seeded featured courses.");
+await db.insert(FeaturedCourses).values(featuredPayload);
+console.log("Successfully seeded featured courses.");
+
 
   // --- Engagement Seeding ---
   console.log("Seeding engagement data...");

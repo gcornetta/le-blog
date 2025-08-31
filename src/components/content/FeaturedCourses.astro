@@ -82,7 +82,7 @@ const courses = await db
 
           <div class="mt-auto pt-2 border-t border-base-200 text-sm flex justify-end items-center">
             <div class="card-actions justify-end">
-              <a href="/courses" class="btn btn-sm btn-primary hover:btn-secondary">Explore Course</a>
+              <a href={`/courses/${course.slug}`} class="btn btn-sm btn-primary hover:btn-secondary">Explore Course</a>
             </div>
           </div>
         </div>

@@ -1,0 +1,22 @@
+---
+// File: src/pages/courses/[slug].astro
+import SiteLayout from "../../layouts/BaseLayout.astro"; // Basic page layout
+import CourseLanding from "../../components/course/CourseLanding.astro";
+import { getCourseBySlug } from "../../utils/courses.mjs";
+
+// URL param
+const { slug } = Astro.params;
+
+// Fetch course data (could be from DB/Directus later)
+const course = await getCourseBySlug(slug);
+
+if (!course) {
+  // Optional: render a 404-ish friendly page
+  throw new Error(`Course not found: ${slug}`);
+}
+
+const title = `${course.title} — Course`;
+---
+<SiteLayout title={title} description={course.seoDescription ?? course.subtitle}>
+  <CourseLanding course={course} />
+</SiteLayout>
