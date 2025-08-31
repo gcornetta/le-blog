@@ -5,7 +5,7 @@ import { Image } from "astro:assets";
 
 // Eager-import all course images as ImageMetadata (same pattern as FeaturedCourses.astro)
 const courseImageModules = import.meta.glob(
-  "../../assets/images/courses/**/*.{png,jpg,jpeg,webp,avif}",
+  "../../assets/images/{courses,authors}/**/*.{png,jpg,jpeg,webp,avif}",
   { eager: true }
 );
 
@@ -65,6 +65,7 @@ const { course } = Astro.props;
 const fmt = new Intl.NumberFormat("en-US");
 
 const heroMeta = resolveCourseImage(course.heroImage);
+const avatarMeta = resolveCourseImage(course.avatar);
 
 ---
 
@@ -83,6 +84,39 @@ const heroMeta = resolveCourseImage(course.heroImage);
           </h1>
           {course.subtitle && (
             <p class="mt-3 text-base-content/80 text-lg">{course.subtitle}</p>
+          )}
+
+          <!-- Instructor -->
+          {(course.instructor || course.avatar) && (
+            <div class="mt-4 flex items-center gap-3">
+              <div class="avatar">
+                <div class="w-12 h-12 rounded-full ring ring-base-300 ring-offset-2 ring-offset-base-100 overflow-hidden">
+                  {avatarMeta ? (
+                    <Image
+                      src={avatarMeta}
+                      alt={course.instructor ? `${course.instructor} — instructor` : "Instructor avatar"}
+                      width={96}
+                      height={96}
+                      class="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  ) : course.avatar ? (
+                    <img
+                      src={typeof course.avatar === "string" ? course.avatar : ""}
+                      alt={course.instructor ? `${course.instructor} — instructor` : "Instructor avatar"}
+                      class="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  ) : null}
+                </div>
+              </div>
+              {course.instructor && (
+                <div class="leading-tight">
+                  <p class="font-semibold">{course.instructor}</p>
+                  <p class="text-xs opacity-70">Instructor</p>
+                </div>
+              )}
+            </div>
           )}
 
           <!-- Key stats row -->
@@ -107,6 +141,24 @@ const heroMeta = resolveCourseImage(course.heroImage);
             </li>
           </ul>
 
+          <!-- Social proof (rating / students) -->
+          <div class="flex items-center gap-2 ml-1 text-sm opacity-80">
+            {course.rating && (
+              <>
+                <span class="opacity-70">Course ratings:</span>
+                <div class="rating rating-sm">
+                  <input type="radio" class="mask mask-star-2 bg-warning" checked />
+                  <input type="radio" class="mask mask-star-2 bg-warning" />
+                  <input type="radio" class="mask mask-star-2 bg-warning" />
+                  <input type="radio" class="mask mask-star-2 bg-warning" />
+                  <input type="radio" class="mask mask-star-2 bg-warning" />
+                </div>
+                <span>{course.rating.toFixed(1)}</span>
+              </>
+            )}
+            {course.students && <span>· {fmt.format(course.students)} learners</span>}
+          </div>
+
           <!-- Primary CTA group -->
           <div class="mt-8 flex flex-wrap items-center gap-3">
             <a href={course.ctaPrimaryHref} class="btn btn-primary btn-lg">
@@ -117,22 +169,6 @@ const heroMeta = resolveCourseImage(course.heroImage);
                 {course.ctaSecondaryLabel ?? "View syllabus"}
               </a>
             )}
-            <!-- Social proof (rating / students) -->
-            <div class="flex items-center gap-2 ml-1 text-sm opacity-80">
-              {course.rating && (
-                <>
-                  <div class="rating rating-sm">
-                    <input type="radio" class="mask mask-star-2 bg-warning" checked />
-                    <input type="radio" class="mask mask-star-2 bg-warning" />
-                    <input type="radio" class="mask mask-star-2 bg-warning" />
-                    <input type="radio" class="mask mask-star-2 bg-warning" />
-                    <input type="radio" class="mask mask-star-2 bg-warning" />
-                  </div>
-                  <span>{course.rating.toFixed(1)}</span>
-                </>
-              )}
-              {course.students && <span>· {fmt.format(course.students)} learners</span>}
-            </div>
           </div>
         </div>
           <!-- Visual / Cover -->
@@ -179,28 +215,47 @@ const heroMeta = resolveCourseImage(course.heroImage);
     </ul>
   </div>
 
-  <!-- SYLLABUS PREVIEW (accordion like Codecademy) -->
-  <div class="max-w-6xl mx-auto px-4 pb-6" x-data="{ openAll:false }">
-    <div class="flex items-center justify-between">
-      <h2 class="text-2xl font-bold">Syllabus</h2>
-      <button class="btn btn-sm" @click="openAll = !openAll" x-text="openAll ? 'Collapse all' : 'Expand all'"></button>
-    </div>
-    <p class="mt-1 opacity-70 text-sm">
-      {course.lessons} lessons · {course.projects} projects · {course.quizzes} quizzes
-    </p>
+<!-- SYLLABUS (bounded max width, accordion fills full space, numbered badges, expand/collapse all) -->
+<div class="max-w-6xl mx-auto px-4 pb-6" x-data="{ expandAll: false }" x-init="$nextTick(() => { $refs.syllabus.querySelectorAll('input[type=checkbox]').forEach(i => i.checked = false) })">
+  <div class="flex items-center justify-between">
+    <h2 class="text-2xl font-bold">Syllabus</h2>
+    <button
+      type="button"
+      class="btn btn-sm"
+      @click="
+        expandAll = !expandAll;
+        $refs.syllabus.querySelectorAll('input[type=checkbox]').forEach(i => i.checked = expandAll)
+      "
+      x-text="expandAll ? 'Collapse all' : 'Expand all'">
+    </button>
+  </div>
 
-    <div class="mt-4 space-y-3">
-      {(course.syllabus ?? []).map((m: any) => (
-        <details class="collapse bg-base-200 rounded-xl" x-bind:open="openAll">
-          <summary class="collapse-title text-base font-medium">
-            <span class="opacity-70 mr-2">{m.n}.</span> {m.title}
-          </summary>
-          <div class="collapse-content">
-            <p class="opacity-70">Module type: {m.type}</p>
-          </div>
-        </details>
-      ))}
-    </div>
+  <p class="mt-1 opacity-70 text-sm">
+    {course.lessons} lessons · {course.projects} projects · {course.quizzes} quizzes
+  </p>
+
+  <div class="join join-vertical bg-base-100 mt-4 w-full" x-ref="syllabus">
+    {(course.syllabus ?? []).map((m: any, i: number) => (
+      <div class="collapse collapse-arrow join-item border border-base-300 w-full">
+        <input type="checkbox" />
+        <div class="collapse-title font-semibold flex items-center gap-3">
+          <!-- Circular number badge -->
+          <span class="badge badge-primary rounded-full w-8 h-8 p-0 grid place-items-center text-primary-content">
+            {String(m.n ?? i + 1)}
+          </span>
+          <span>{m.title}</span>
+        </div>
+        <div class="collapse-content text-sm space-y-2">
+          <p class="opacity-70">Module type: {m.type}</p>
+          {m.summary && <p>{m.summary}</p>}
+          {Array.isArray(m.items) && m.items.length > 0 && (
+            <ul class="list-disc ml-5 space-y-1">
+              {m.items.map((it: string) => <li>{it}</li>)}
+            </ul>
+          )}
+        </div>
+      </div>
+    ))}
   </div>
 
   <!-- REQUIREMENTS (optional) -->

@@ -75,7 +75,7 @@ const BlockedIPs = defineTable({
   },
 });
 
-/** FeaturedCourses table (normalized for your UI needs) */
+/** Courses table  **/
 const Courses = defineTable({
   name: 'courses',
   columns: {
@@ -91,6 +91,7 @@ const Courses = defineTable({
     // Display / catalog fields
     level: column.text(),               // e.g., 'beginner' | 'intermediate' | 'advanced'
     instructor: column.text(),
+    avatar: column.text(),              // path like '/images/authors/...'
     rating: column.number({ default: 0 }),
     excerpt: column.text(),
     image: column.text(),               // path like '/images/courses/...'
