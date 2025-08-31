@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 
-import { db, Admins, Users, Courses, Engagement, FeaturedVideo, LatestVideos, PostStats, eq } from 'astro:db';
+import { db, Admins, Users, Courses, Engagement, Videos, PostStats, eq } from 'astro:db';
 import { faker } from '@faker-js/faker';
 
 
@@ -281,122 +281,159 @@ export default async function seed() {
   }
   console.log("Successfully seeded engagement data for users.");
 
-  // --- Featured Video ---
-  console.log("Seeding featured video…");
-  await db.delete(FeaturedVideo);
-  await db.insert(FeaturedVideo).values([
-    {
-      id: 1,
-      title: "Understanding GFET Design",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
-      youtubeId: "bTqVqk7FSmY",
-    },
-  ]);
-  console.log("Featured video seeded.");
+  // --- Videos ---
+  console.log("Seeding videos…");
+  await db.delete(Videos);
+  await db.insert(Videos).values([
+// Featured (first video)
+  {
+    id: 1,
+    title: "Understanding GFET Design",
+    featured: true,
+    description:
+       "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
+    thumbnail: null,
+    youtubeId: "bTqVqk7FSmY",
+    duration: "12:00",
+    date: new Date("2025-07-22"),
+    created_at: faker.date.past({ months: 2 }),
+  },
 
-  // --- Latest Videos ---
-  console.log("Seeding latest videos…");
-  await db.delete(LatestVideos);
-  await db.insert(LatestVideos).values([
-    {
-      id: 1,
-      title: "GFET Layout Optimization",
-      thumbnail: "layout-opt",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "12:34",
-      date: new Date("2025-07-20"),
-    },
-    {
-      id: 2,
-      title: "Compact Model Extraction",
-      thumbnail: "compact-model",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "9:02",
-      date: new Date("2025-07-18"),
-    },
-    {
-      id: 3,
-      title: "AI-assisted Circuit Design",
-      thumbnail: "ai-circuit",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "14:58",
-      date: new Date("2025-07-15"),
-    },
-    {
-      id: 4,
-      title: "Charge Pump Simulation",
-      thumbnail: "charge-pump",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "11:21",
-      date: new Date("2025-07-14"),
-    },
-    {
-      id: 5,
-      title: "Intro to Metasurface Design",
-      thumbnail: "metasurface",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "13:45",
-      date: new Date("2025-07-13"),
-    },
-    {
-      id: 6,
-      title: "Rectenna Matching Networks",
-      thumbnail: "rectenna",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "10:50",
-      date: new Date("2025-07-11"),
-    },
-    {
-      id: 7,
-      title: "ML for GFET Optimization",
-      thumbnail: "ml-optimization",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "15:12",
-      date: new Date("2025-07-09"),
-    },
-    {
-      id: 8,
-      title: "DRC and LVS Basics",
-      thumbnail: "drc-lvs",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "8:59",
-      date: new Date("2025-07-07"),
-    },
-    {
-      id: 9,
-      title: "GFET Layout from Scratch",
-      thumbnail: "layout-from-scratch",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "16:04",
-      date: new Date("2025-07-05"),
-    },
-    {
-      id: 10,
-      title: "Capacitor Modeling Deep Dive",
-      thumbnail: "capacitor-model",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "10:30",
-      date: new Date("2025-07-03"),
-    },
-    {
-      id: 11,
-      title: "Energy Scavenging Circuits",
-      thumbnail: "energy-scavenging",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "14:11",
-      date: new Date("2025-07-01"),
-    },
-    {
-      id: 12,
-      title: "Graphene Bandgap Engineering",
-      thumbnail: "graphene-bandgap",
-      youtubeId: "bTqVqk7FSmY",
-      duration: "9:47",
-      date: new Date("2025-06-28"),
-    },
-  ]);
-  console.log("Latest videos seeded.");
+  // Non-featured (former LatestVideos) — thumbnails UNCHANGED
+  {
+    id: 2,
+    title: "GFET Layout Optimization",
+    featured: false,
+    description: "Practical tips to optimize GFET layout for performance and reliability.",
+    thumbnail: "layout-opt",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "12:34",
+    date: new Date("2025-07-20"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 3,
+    title: "Compact Model Extraction",
+    featured: false,
+    description: "From measurements to a usable compact model.",
+    thumbnail: "compact-model",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "9:02",
+    date: new Date("2025-07-18"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 4,
+    title: "AI-assisted Circuit Design",
+    featured: false,
+    description: "Using ML to guide circuit exploration and optimization.",
+    thumbnail: "ai-circuit",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "14:58",
+    date: new Date("2025-07-15"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 5,
+    title: "Charge Pump Simulation",
+    featured: false,
+    description: "End-to-end flow to simulate and validate charge pumps.",
+    thumbnail: "charge-pump",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "11:21",
+    date: new Date("2025-07-14"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 6,
+    title: "Intro to Metasurface Design",
+    featured: false,
+    description: "Core concepts behind metasurfaces and applications.",
+    thumbnail: "metasurface",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "13:45",
+    date: new Date("2025-07-13"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 7,
+    title: "Rectenna Matching Networks",
+    featured: false,
+    description: "Designing and verifying matching networks for rectennas.",
+    thumbnail: "rectenna",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "10:50",
+    date: new Date("2025-07-11"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 8,
+    title: "ML for GFET Optimization",
+    featured: false,
+    description: "Applying ML pipelines to GFET parameter optimization.",
+    thumbnail: "ml-optimization",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "15:12",
+    date: new Date("2025-07-09"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 9,
+    title: "DRC and LVS Basics",
+    featured: false,
+    description: "Foundational checks for layout signoff.",
+    thumbnail: "drc-lvs",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "8:59",
+    date: new Date("2025-07-07"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 10,
+    title: "GFET Layout from Scratch",
+    featured: false,
+    description: "A clean-sheet approach to building a GFET layout.",
+    thumbnail: "layout-from-scratch",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "16:04",
+    date: new Date("2025-07-05"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 11,
+    title: "Capacitor Modeling Deep Dive",
+    featured: false,
+    description: "Understanding parasitics and realistic capacitor models.",
+    thumbnail: "capacitor-model",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "10:30",
+    date: new Date("2025-07-03"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 12,
+    title: "Energy Scavenging Circuits",
+    featured: false,
+    description: "Architectures and trade-offs for energy harvesting.",
+    thumbnail: "energy-scavenging",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "14:11",
+    date: new Date("2025-07-01"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 13,
+    title: "Graphene Bandgap Engineering",
+    featured: false,
+    description: "Techniques to open and tune bandgap in graphene.",
+    thumbnail: "graphene-bandgap",
+    youtubeId: "bTqVqk7FSmY",
+    duration: "9:47",
+    date: new Date("2025-06-28"),
+    created_at: faker.date.past({ months: 2 }),
+  },
+]);
+console.log("Videos seeded.");
 
 // --- PostStats Seeding (from filesystem; no astro:content) ---
 console.log("Seeding post view statistics (PostStats)…");

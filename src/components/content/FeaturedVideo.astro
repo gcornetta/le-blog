@@ -2,22 +2,24 @@
 import { Image } from 'astro:assets';
 import VideoModal from '../ui/VideoModal.astro';
 import VideoPlayer from '../ui/VideoPlayer.astro';
-import { db, FeaturedVideo, LatestVideos, desc } from 'astro:db';
+import { db, Videos, eq, desc } from 'astro:db';
 import thumbnails from '../../assets/thumbnailMap.mjs';
 
 // Featured video
 const featured = ( await db
   .select()
-  .from(FeaturedVideo)
-  .orderBy(desc(FeaturedVideo.created_at))
+  .from(Videos)
+  .where(eq(Videos.featured, true))
+  .orderBy(desc(Videos.created_at))
   .limit(1)
 )[0];
 
 // Latest videos for carousel (newest first)
 const latestVideosRaw = await db
   .select()
-  .from(LatestVideos)
-  .orderBy(desc(LatestVideos.created_at))
+  .from(Videos)
+  .where(eq(Videos.featured, false))
+  .orderBy(desc(Videos.created_at))
   .limit(12);
 
 const latestVideos = latestVideosRaw

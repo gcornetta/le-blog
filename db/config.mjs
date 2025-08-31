@@ -123,26 +123,15 @@ const Courses = defineTable({
   }),
 });
 
-
-// Single featured video (one row expected)
-const FeaturedVideo = defineTable({
-  name: 'featured_video',
-  columns: {
-    id: column.number({ primaryKey: true }),
-    title: column.text(),
-    description: column.text(),
-    youtubeId: column.text(),
-    created_at: column.date({ default: NOW }),
-  },
-});
-
 // Latest videos list (carousel entries)
-const LatestVideos = defineTable({
-  name: 'latest_videos',
+const Videos = defineTable({
+  name: 'videos',
   columns: {
     id: column.number({ primaryKey: true }),
     title: column.text(),
-    thumbnail: column.text(),          // store the path (e.g. /images/videos/xxx.webp or .jpg)
+    featured: column.boolean({ default: false }),
+    description: column.text(),
+    thumbnail: column.text({ optional: true }),          // store the path (e.g. /images/videos/xxx.webp or .jpg)
     youtubeId: column.text(),
     duration: column.text(),           // keep as text "mm:ss"
     date: column.date(),               // ISO in seed; rendered as yyyy-mm-dd in UI
@@ -170,8 +159,7 @@ export default defineDb({
     UnregisteredActivity,
     Engagement,
     BlockedIPs,
-    FeaturedVideo,
-    LatestVideos,
+    Videos,
     PostStats,
   },
 });
