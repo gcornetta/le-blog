@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 
-import { db, Admins, Users, Courses, Engagement, Videos, PostStats, eq } from 'astro:db';
+import { db, Admins, Users, Courses, Engagement, Videos, PostStats, CourseMeta, CourseOutcomes, CourseModules, eq } from 'astro:db';
 import { faker } from '@faker-js/faker';
 
 
@@ -110,146 +110,251 @@ export default async function seed() {
     console.log('No new student users to seed.');
   }
 
-  // --- Course Seeding ---
-  console.log("Seeding courses...");
-  const existingCourses = await db.select().from(Courses);
+  // --- Course Seeding (enriched; all featured) ---
+console.log("Seeding courses...");
+const existingCourses = await db.select().from(Courses);
 
-  if (existingCourses.length === 0) {
-    await db.insert(Courses).values([
-      {
-        id: 1,
-        slug: 'circuit-theory',
-        title: 'Circuit Theory',
-        description: 'Understand the fundamentals of electric circuits.',
-        level: 'beginner',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.5,
-        excerpt:
-          'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
-        image: '/images/courses/circuit-theory.jpg',
-        featured: true,
-        featured_order: 1,
-        created_at: faker.date.past({ months: 6 }),
-      },
-      {
-        id: 2,
-        slug: 'digital-electronics',
-        title: 'Digital Electronics',
-        description: 'Dive into logic gates, flip-flops, finite state machines.',
-        level: 'intermediate',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.2,
-        excerpt:
-          'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
-        image: '/images/courses/digital-electronics.jpg',
-        featured: true,
-        featured_order: 2,
-        created_at: faker.date.past({ months: 4 }),
-      },
-      {
-        id: 3,
-        slug: 'analog-electronics',
-        title: 'Analog Electronics',
-        description: 'Explore MOSFETs, opamps, and amplifiers.',
-        level: 'intermediate',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.8,
-        excerpt:
-          'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
-        image: '/images/courses/analog-electronics.jpg',
-        featured: true,
-        featured_order: 3,
-        created_at: faker.date.past({ months: 2 }),
-      },
-      {
-        id: 4,
-        slug: 'rf-and-microwave-electronics',
-        title: 'RF & Microwave Electronics',
-        description: 'Analyze high-frequency circuit design principles.',
-        level: 'advanced',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.7,
-        excerpt:
-          'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
-        image: '/images/courses/rf-microwave.jpg',
-        featured: true,
-        featured_order: 4,
-        created_at: faker.date.past({ months: 3 }),
-      },
-    ]);
-    console.log("Successfully seeded 4 courses (all featured).");
-  } else {
-    // If rows already exist (e.g., from a prior seed), make them featured and backfill new fields.
-    console.log("Courses already exist; updating to ensure all are featured and have slugs/metadata…");
+const COURSE_ROWS = [
+  {
+    id: 1,
+    slug: 'circuit-theory',
+    title: 'Circuit Theory',
+    description: 'Understand the fundamentals of electric circuits.',
+    level: 'beginner',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.5,
+    excerpt: 'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
+    image: '/images/courses/circuit-theory.jpg',
+    featured: true,
+    featured_order: 1,
+    created_at: faker.date.past({ months: 6 }),
+  },
+  {
+    id: 2,
+    slug: 'digital-electronics',
+    title: 'Digital Electronics',
+    description: 'Dive into logic gates, flip-flops, finite state machines.',
+    level: 'intermediate',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.2,
+    excerpt: 'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
+    image: '/images/courses/digital-electronics.jpg',
+    featured: true,
+    featured_order: 2,
+    created_at: faker.date.past({ months: 4 }),
+  },
+  {
+    id: 3,
+    slug: 'analog-electronics',
+    title: 'Analog Electronics',
+    description: 'Explore MOSFETs, opamps, and amplifiers.',
+    level: 'intermediate',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.8,
+    excerpt: 'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
+    image: '/images/courses/analog-electronics.jpg',
+    featured: true,
+    featured_order: 3,
+    created_at: faker.date.past({ months: 2 }),
+  },
+  {
+    id: 4,
+    slug: 'rf-and-microwave-electronics',
+    title: 'RF & Microwave Electronics',
+    description: 'Analyze high-frequency circuit design principles.',
+    level: 'advanced',
+    instructor: 'Dr. Gianluca Cornetta',
+    rating: 4.7,
+    excerpt: 'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
+    image: '/images/courses/rf-microwave.jpg',
+    featured: true,
+    featured_order: 4,
+    created_at: faker.date.past({ months: 3 }),
+  },
+];
 
-    const backfills = [
-      {
-        title: 'Circuit Theory',
-        slug: 'circuit-theory',
-        level: 'beginner',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.5,
-        excerpt:
-          'Understand the fundamentals of electric circuits, including Ohm’s law, Kirchhoff’s rules, and basic network theorems.',
-        image: '/images/courses/circuit-theory.jpg',
-        featured_order: 1,
-      },
-      {
-        title: 'Digital Electronics',
-        slug: 'digital-electronics',
-        level: 'intermediate',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.2,
-        excerpt:
-          'Dive into logic gates, flip-flops, finite state machines and the design of combinational and sequential circuits.',
-        image: '/images/courses/digital-electronics.jpg',
-        featured_order: 2,
-      },
-      {
-        title: 'Analog Electronics',
-        slug: 'analog-electronics',
-        level: 'intermediate',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.8,
-        excerpt:
-          'Explore MOSFETs, opamps, and amplifiers in the context of analog circuit design and signal conditioning.',
-        image: '/images/courses/analog-electronics.jpg',
-        featured_order: 3,
-      },
-      {
-        title: 'RF & Microwave Electronics',
-        slug: 'rf-and-microwave-electronics',
-        level: 'advanced',
-        instructor: 'Dr. Gianluca Cornetta',
-        rating: 4.7,
-        excerpt:
-          'Analyze high-frequency circuit design principles, including transmission lines, S-parameters, and impedance matching.',
-        image: '/images/courses/rf-microwave.jpg',
-        featured_order: 4,
-      },
-    ];
-
-    for (const u of backfills) {
-      await db
-        .update(Courses)
-        .set({
-          slug: u.slug,
-          level: u.level,
-          instructor: u.instructor,
-          rating: u.rating,
-          excerpt: u.excerpt,
-          image: u.image,
-          featured: true,
-          featured_order: u.featured_order,
-        })
-        .where(eq(Courses.title, u.title));
-    }
-
-    // As a catch-all, ensure *every* existing course is featured
-    await db.update(Courses).set({ featured: true }).where(eq(Courses.featured, false));
-
-    console.log("Updated existing courses; all are featured and enriched.");
+if (existingCourses.length === 0) {
+  await db.insert(Courses).values(COURSE_ROWS);
+  console.log("Inserted base courses.");
+} else {
+  console.log("Courses exist; updating/enriching…");
+  for (const row of COURSE_ROWS) {
+    await db.update(Courses).set({
+      slug: row.slug,
+      level: row.level,
+      instructor: row.instructor,
+      rating: row.rating,
+      excerpt: row.excerpt,
+      image: row.image,
+      featured: true,
+      featured_order: row.featured_order,
+    }).where(eq(Courses.title, row.title));
   }
+}
+
+// Build lookup (slug -> id)
+const allCourses = await db.select().from(Courses);
+const CID = Object.fromEntries(allCourses.map(c => [c.slug, c.id]));
+
+// --- CourseMeta Seeding ---
+console.log("Seeding course meta…");
+await db.delete(CourseMeta); // idempotent dev seeding
+
+const META = {
+  'circuit-theory': {
+    hero_image: '/images/courses/hero-circuit-theory.jpg',
+    badge: 'Core',
+    duration_hours: 18,
+    lessons_count: 14,
+    projects_count: 6,
+    quizzes_count: 8,
+    students_count: 5120,
+    cta_primary_href: '/signup?course=circuit-theory',
+    cta_primary_label: 'Start learning',
+    cta_secondary_href: '/syllabus/circuit-theory',
+    cta_secondary_label: 'View syllabus',
+  },
+  'digital-electronics': {
+    hero_image: '/images/courses/hero-digital-electronics.jpg',
+    badge: 'Updated',
+    duration_hours: 20,
+    lessons_count: 16,
+    projects_count: 7,
+    quizzes_count: 10,
+    students_count: 4380,
+    cta_primary_href: '/signup?course=digital-electronics',
+    cta_primary_label: 'Start learning',
+    cta_secondary_href: '/syllabus/digital-electronics',
+    cta_secondary_label: 'View syllabus',
+  },
+  'analog-electronics': {
+    hero_image: '/images/courses/hero-analog-electronics.jpg',
+    badge: 'New',
+    duration_hours: 24,
+    lessons_count: 18,
+    projects_count: 8,
+    quizzes_count: 10,
+    students_count: 3290,
+    cta_primary_href: '/signup?course=analog-electronics',
+    cta_primary_label: 'Start learning',
+    cta_secondary_href: '/syllabus/analog-electronics',
+    cta_secondary_label: 'View syllabus',
+  },
+  'rf-and-microwave-electronics': {
+    hero_image: '/images/courses/hero-rf-microwave.jpg',
+    badge: 'Advanced',
+    duration_hours: 26,
+    lessons_count: 17,
+    projects_count: 6,
+    quizzes_count: 9,
+    students_count: 2210,
+    cta_primary_href: '/signup?course=rf-and-microwave-electronics',
+    cta_primary_label: 'Start learning',
+    cta_secondary_href: '/syllabus/rf-and-microwave-electronics',
+    cta_secondary_label: 'View syllabus',
+  },
+};
+
+await db.insert(CourseMeta).values(
+  Object.entries(META).map(([slug, m]) => ({
+    course_id: CID[slug],
+    ...m,
+  }))
+);
+
+// --- Outcomes (“What you’ll learn”) ---
+console.log("Seeding course outcomes…");
+await db.delete(CourseOutcomes);
+
+const OUTCOMES = {
+  'circuit-theory': [
+    "Apply KCL/KVL and Ohm’s law to analyze DC/AC circuits",
+    "Use Thevenin/Norton to simplify networks",
+    "Solve first-/second-order transients (RC/RL/RLC)",
+    "Master phasors, impedance, and power in sinusoidal steady state",
+  ],
+  'digital-electronics': [
+    "Design combinational circuits with Boolean algebra & K-maps",
+    "Build synchronous systems with FFs, counters, and registers",
+    "Model Moore/Mealy FSMs and reason about timing",
+    "Complete a tiny HDL-based mini-project (optional)",
+  ],
+  'analog-electronics': [
+    "Bias and analyze BJT/MOSFET stages (small-signal)",
+    "Design common source/emitter & follower amplifiers",
+    "Understand gain-bandwidth limits & Miller effect",
+    "Use op-amps in linear applications and active filters",
+  ],
+  'rf-and-microwave-electronics': [
+    "Model transmission lines, reflections, and standing waves",
+    "Use the Smith Chart for matching/visualization",
+    "Work with S-parameters and basic RF measurements",
+    "Understand LNA design trade-offs and noise basics",
+  ],
+};
+
+const outcomeRows = [];
+for (const [slug, arr] of Object.entries(OUTCOMES)) {
+  arr.forEach((text, i) => {
+    outcomeRows.push({ course_id: CID[slug], order_index: i + 1, text });
+  });
+}
+await db.insert(CourseOutcomes).values(outcomeRows);
+
+// --- Modules (Syllabus preview) ---
+console.log("Seeding course modules…");
+await db.delete(CourseModules);
+
+const MODULES = {
+  'circuit-theory': [
+    { n: 1, title: "Units, signals, and circuit elements", type: "lesson" },
+    { n: 2, title: "Ohm’s law, KCL/KVL, and power", type: "lesson" },
+    { n: 3, title: "Series/parallel, source transformations", type: "lesson" },
+    { n: 4, title: "Thevenin & Norton equivalents", type: "lesson" },
+    { n: 5, title: "Op-amp ideal intro (as a tool)", type: "lesson" },
+    { n: 6, title: "Transient analysis: RC, RL, RLC", type: "lesson" },
+    { n: 7, title: "Sinusoidal steady state & phasors", type: "lesson" },
+    { n: 8, title: "Power, complex power, PF correction", type: "lesson" },
+  ],
+  'digital-electronics': [
+    { n: 1, title: "Number systems & logic variables", type: "lesson" },
+    { n: 2, title: "Logic gates & Boolean identities", type: "lesson" },
+    { n: 3, title: "K-maps & combinational design", type: "lesson" },
+    { n: 4, title: "Adders, mux/demux, encoders/decoders", type: "lesson" },
+    { n: 5, title: "Flip-flops & latches", type: "lesson" },
+    { n: 6, title: "Counters & shift registers", type: "lesson" },
+    { n: 7, title: "Finite state machines", type: "lesson" },
+    { n: 8, title: "Timing: setup/hold, clocking basics", type: "lesson" },
+    { n: 9, title: "Mini HDL lab (bonus)", type: "project" },
+  ],
+  'analog-electronics': [
+    { n: 1, title: "Semiconductor basics & diodes", type: "lesson" },
+    { n: 2, title: "BJT models, biasing, small-signal", type: "lesson" },
+    { n: 3, title: "MOSFET operation & regions", type: "lesson" },
+    { n: 4, title: "CS/CE & followers", type: "lesson" },
+    { n: 5, title: "Frequency response & Miller effect", type: "lesson" },
+    { n: 6, title: "Op-amp non-idealities & stability intro", type: "lesson" },
+    { n: 7, title: "Active filters & instrumentation amps", type: "lesson" },
+    { n: 8, title: "Mini project: audio preamp", type: "project" },
+  ],
+  'rf-and-microwave-electronics': [
+    { n: 1, title: "High-frequency effects & TL basics", type: "lesson" },
+    { n: 2, title: "Reflections, SWR, and impedance", type: "lesson" },
+    { n: 3, title: "Smith Chart methods & matching", type: "lesson" },
+    { n: 4, title: "S-parameters & measurement intro", type: "lesson" },
+    { n: 5, title: "Amplifier stability & noise figure", type: "lesson" },
+    { n: 6, title: "Filters and passive networks", type: "lesson" },
+    { n: 7, title: "Mini project: L-section match", type: "project" },
+  ],
+};
+
+const moduleRows = [];
+for (const [slug, arr] of Object.entries(MODULES)) {
+  arr.forEach((m) => moduleRows.push({ course_id: CID[slug], ...m }));
+}
+await db.insert(CourseModules).values(moduleRows);
+
+console.log("Courses + meta + outcomes + modules seeded.");
 
   // --- Engagement Seeding ---
   console.log("Seeding engagement data...");

@@ -1,22 +1,74 @@
 ---
-// File: src/pages/courses/[slug].astro
-import SiteLayout from "../../layouts/BaseLayout.astro"; // Basic page layout
+// src/pages/courses/[slug].astro
+import SiteLayout from "../../layouts/BaseLayout.astro";
 import CourseLanding from "../../components/course/CourseLanding.astro";
-import { getCourseBySlug } from "../../utils/courses.mjs";
+import { db, Courses, CourseMeta, CourseOutcomes, CourseModules, eq, asc } from "astro:db";
 
-// URL param
 const { slug } = Astro.params;
 
-// Fetch course data (could be from DB/Directus later)
-const course = await getCourseBySlug(slug);
+const courseRow = (await db
+  .select()
+  .from(Courses)
+  .where(eq(Courses.slug, slug))
+  .limit(1))[0];
 
-if (!course) {
-  // Optional: render a 404-ish friendly page
-  throw new Error(`Course not found: ${slug}`);
-}
+if (!courseRow) throw new Error(`Course not found: ${slug}`);
+
+const meta = (await db
+  .select()
+  .from(CourseMeta)
+  .where(eq(CourseMeta.course_id, courseRow.id))
+  .limit(1))[0];
+
+const outcomes = await db
+  .select()
+  .from(CourseOutcomes)
+  .where(eq(CourseOutcomes.course_id, courseRow.id))
+  .orderBy(asc(CourseOutcomes.order_index));
+
+const modules = await db
+  .select()
+  .from(CourseModules)
+  .where(eq(CourseModules.course_id, courseRow.id))
+  .orderBy(asc(CourseModules.n));
+
+// Build the object that CourseLanding expects
+const course = {
+  slug: courseRow.slug,
+  title: courseRow.title,
+  subtitle: courseRow.description, // you can split subtitle vs long desc later
+  description: courseRow.description,
+  seoDescription: courseRow.excerpt ?? courseRow.description,
+
+  level: courseRow.level,
+  instructor: courseRow.instructor,
+  rating: courseRow.rating,
+  excerpt: courseRow.excerpt,
+
+  // imagery
+  heroImage: meta?.hero_image ?? courseRow.image,
+  image: courseRow.image,
+
+  // stats
+  durationHours: meta?.duration_hours ?? 12,
+  lessons: meta?.lessons_count ?? modules.length,
+  projects: meta?.projects_count ?? 0,
+  quizzes: meta?.quizzes_count ?? 0,
+  students: meta?.students_count ?? undefined,
+  badge: meta?.badge ?? undefined,
+
+  outcomes: outcomes.map(o => o.text),
+  syllabus: modules.map(m => ({ n: m.n, title: m.title, type: m.type })),
+
+  ctaPrimaryHref: meta?.cta_primary_href ?? `/signup?course=${courseRow.slug}`,
+  ctaPrimaryLabel: meta?.cta_primary_label ?? "Start learning",
+  ctaSecondaryHref: meta?.cta_secondary_href ?? undefined,
+  ctaSecondaryLabel: meta?.cta_secondary_label ?? "View syllabus",
+};
 
 const title = `${course.title} — Course`;
 ---
-<SiteLayout title={title} description={course.seoDescription ?? course.subtitle}>
+<SiteLayout title={title} description={course.seoDescription}>
   <CourseLanding course={course} />
 </SiteLayout>
+

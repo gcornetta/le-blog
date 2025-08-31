@@ -38,22 +38,6 @@ const Users = defineTable({
   }),
 });
 
-
-const Progress = defineTable({
-  name: 'progress',
-  columns: {
-    id: column.number({ primaryKey: true }),
-    user_id: column.number({ references: () => Users.columns.id }),
-    course_id: column.number({ references: () => Courses.columns.id }),
-    progress_percentage: column.number({ default: 0 }),
-    completed_at: column.date({ optional: true }),
-  },
-  relations: () => ({
-    user: relations(Users),
-    course: relations(Courses),
-  }),
-});
-
 const UnregisteredActivity = defineTable({
   name: 'unregistered_activity',
   columns: {
@@ -97,10 +81,10 @@ const Courses = defineTable({
   columns: {
     id: column.number({ primaryKey: true }),
 
-    // NEW canonical route slug
+    // Canonical route slug
     slug: column.text({ unique: true }),
 
-    // Existing
+    // Basic info
     title: column.text(),
     description: column.text(),
 
@@ -111,7 +95,7 @@ const Courses = defineTable({
     excerpt: column.text(),
     image: column.text(),               // path like '/images/courses/...'
 
-    // Feature flags
+    // Featured flags
     featured: column.boolean({ default: false }),
     featured_order: column.number({ default: 0 }),
 
@@ -120,6 +104,80 @@ const Courses = defineTable({
   relations: () => ({
     // unchanged relation (Progress → Courses)
     progress: relations(Progress),
+    meta: relations(CourseMeta),
+    outcomes: relations(CourseOutcomes),
+    modules: relations(CourseModules),
+  }),
+});
+
+// Progress tracking for users
+const Progress = defineTable({
+  name: 'progress',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    user_id: column.number({ references: () => Users.columns.id }),
+    course_id: column.number({ references: () => Courses.columns.id }),
+    progress_percentage: column.number({ default: 0 }),
+    completed_at: column.date({ optional: true }),
+  },
+  relations: () => ({
+    user: relations(Users),
+    course: relations(Courses),
+  }),
+});
+
+// Course metadata
+const CourseMeta = defineTable({
+  name: 'course_meta',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    course_id: column.number({ references: () => Courses.columns.id }),
+
+    hero_image: column.text({ optional: true }), // big banner image (hero)
+    badge: column.text({ optional: true }),
+
+    duration_hours: column.number({ default: 12 }),
+    lessons_count: column.number({ default: 8 }),
+    projects_count: column.number({ default: 3 }),
+    quizzes_count: column.number({ default: 6 }),
+    students_count: column.number({ optional: true }),
+
+    cta_primary_href: column.text({ optional: true }),
+    cta_primary_label: column.text({ optional: true }),
+    cta_secondary_href: column.text({ optional: true }),
+    cta_secondary_label: column.text({ optional: true }),
+  },
+  relations: () => ({
+    course: relations(Courses),
+  }),
+});
+
+// Course outcomes
+const CourseOutcomes = defineTable({
+  name: 'course_outcomes',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    course_id: column.number({ references: () => Courses.columns.id }),
+    order_index: column.number({ default: 1 }),
+    text: column.text(),
+  },
+  relations: () => ({
+    course: relations(Courses),
+  }),
+});
+
+// Course modules
+const CourseModules = defineTable({
+  name: 'course_modules',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    course_id: column.number({ references: () => Courses.columns.id }),
+    n: column.number({ default: 1 }),         // shown number
+    title: column.text(),
+    type: column.text(),                       // 'lesson' | 'project' | 'quiz'
+  },
+  relations: () => ({
+    course: relations(Courses),
   }),
 });
 
@@ -161,5 +219,8 @@ export default defineDb({
     BlockedIPs,
     Videos,
     PostStats,
+    CourseMeta,
+    CourseOutcomes,
+    CourseModules,
   },
 });
