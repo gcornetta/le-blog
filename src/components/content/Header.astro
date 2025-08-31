@@ -3,28 +3,89 @@
 import ThemeToggle from '../ui/ThemeToggle.astro';
 import LogoIcon    from '../../assets/logo.svg';
 
-// Get current route from Astro global
 const { url } = Astro;
 const hideNav = url.pathname === '/login';
 ---
 <header class="bg-base-100 border-b shadow-sm">
-  <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3" aria-label="My Teaching Blog">
-      <LogoIcon class="w-8 h-8" aria-hidden="true" />
-      <span class="text-2xl font-bold text-white animate-[neon_2s_ease-in-out_infinite]">Learn<span class="inline-block mr-[0.2rem] ml-1"
-        style="transform: rotate(-15deg);">e</span>lectronics</span>
-    </a>
+  <div class="navbar mx-auto max-w-7xl px-4">
+    <div class="navbar-start">
+      {!hideNav && (
+        <div
+          class="dropdown lg:hidden"
+          x-data="{ mobileOpen: false }"
+          :class="mobileOpen ? 'dropdown-open' : ''"
+          @click.outside="mobileOpen = false"
+          @keydown.escape.window="mobileOpen = false"
+        >
+          <!-- Animated hamburger/close with rotation -->
+          <button
+            @click="mobileOpen = !mobileOpen"
+            :aria-expanded="mobileOpen"
+            aria-controls="mobile-nav"
+            class="btn btn-ghost btn-circle"
+          >
+            <div
+              class="relative w-5 h-5 transition-transform duration-300"
+              :class="mobileOpen ? 'rotate-180' : 'rotate-0'"
+            >
+              <!-- top bar -->
+              <span
+                class="absolute left-0 top-1 block h-0.5 w-5 bg-current transition-all duration-300"
+                :class="mobileOpen ? 'translate-y-1.5 rotate-45' : ''"
+              ></span>
+              <!-- middle bar -->
+              <span
+                class="absolute left-0 top-2.5 block h-0.5 w-5 bg-current transition-opacity duration-300"
+                :class="mobileOpen ? 'opacity-0' : 'opacity-100'"
+              ></span>
+              <!-- bottom bar -->
+              <span
+                class="absolute left-0 top-4 block h-0.5 w-5 bg-current transition-all duration-300"
+                :class="mobileOpen ? '-translate-y-1.5 -rotate-45' : ''"
+              ></span>
+            </div>
+          </button>
+
+
+          <!-- Mobile dropdown -->
+          <ul
+            id="mobile-nav"
+            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-50 mt-3 w-56 p-2 shadow"
+          >
+            <li><a href="/"        @click="mobileOpen = false">Home</a></li>
+            <li><a href="/about"   @click="mobileOpen = false">About</a></li>
+            <li><a href="/courses" @click="mobileOpen = false">Courses</a></li>
+            <li><a href="/blog"    @click="mobileOpen = false">Blog</a></li>
+            <li><a href="/login"   @click="mobileOpen = false">Signin</a></li>
+          </ul>
+        </div>
+      )}
+
+      <!-- Brand -->
+      <a href="/" class="btn btn-ghost gap-3 px-1" aria-label="My Teaching Blog">
+        <LogoIcon class="w-9 h-9 shrink-0" aria-hidden="true" />
+        <span class="text-2xl font-bold whitespace-nowrap select-none">
+          <span class="text-white animate-[neon_2s_ease-in-out_infinite]">
+            Learn<span class="inline-block mr-[0.2rem] ml-1 -rotate-[15deg]">e</span>lectronics
+          </span>
+        </span>
+      </a>
+    </div>
+
     {!hideNav && (
-      <nav>
-        <ul class="flex gap-6">
+      <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
           <li><a href="/" class="hover:underline">Home</a></li>
           <li><a href="/about" class="hover:underline">About</a></li>
           <li><a href="/courses" class="hover:underline">Courses</a></li>
           <li><a href="/blog" class="hover:underline">Blog</a></li>
           <li><a href="/login" class="hover:underline">Signin</a></li>
         </ul>
-      </nav>
+      </div>
     )}
-    <ThemeToggle/>
+
+    <div class="navbar-end gap-2">
+      <ThemeToggle />
+    </div>
   </div>
 </header>
