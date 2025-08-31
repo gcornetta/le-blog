@@ -63,9 +63,9 @@ const dateISO = isNaN(dateObj.getTime()) ? undefined : dateObj.toISOString();
     {fm.tags?.length ? (
       <div class="flex flex-wrap gap-2">
         {fm.tags.map((tag) => (
-          <a href={`/tags/${encodeURIComponent(tag)}`} class="badge badge-outline" aria-label={`Tag ${tag}`}>
+          <div class="badge badge-outline" aria-label={`Tag ${tag}`}>
             {tag}
-          </a>
+          </div>
         ))}
       </div>
     ) : null}
