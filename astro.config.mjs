@@ -9,10 +9,16 @@ import rss       from '@astrojs/rss';
 import sitemap   from '@astrojs/sitemap';
 import svelte from '@astrojs/svelte';
 
+import typography from '@tailwindcss/typography';
+import daisyui from 'daisyui';
+
 import db from '@astrojs/db';
 
 export default defineConfig({
-  site: 'https://my-domain.com',  
+  site: 'https://my-domain.com',
+  content: [
+    './src/**/*.{astro,html,md,mdx,js,svelte}',
+  ],
   integrations: [
     mdx(),
     alpine(),
