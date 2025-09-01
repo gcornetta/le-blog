@@ -1,0 +1,287 @@
+---
+import CoursesLayout from "../../layouts/CoursesLayout.astro";
+import { Image } from "astro:assets";
+import { db, Courses, CourseMeta, CourseTags } from "astro:db";
+
+// 1) Fetch
+const courseRows = await db.select().from(Courses);
+const metaRows   = await db.select().from(CourseMeta);
+const tagRows    = await db.select().from(CourseTags);
+
+// 2) Build image resolver (same pattern as the layout)
+const courseImageModules = import.meta.glob(
+  "../../assets/images/{courses,authors}/**/*.{png,jpg,jpeg,webp,avif}",
+  { eager: true }
+);
+
+function normalizeKey(p: string) {
+  let s = p.replace(/\\/g, "/");
+  s = s.replace(/^.*\/assets\/images\//i, "/images/");
+  s = s.replace(/^images\//i, "/images/");
+  if (!s.startsWith("/images/")) s = s.startsWith("/") ? s : `/images/${s}`;
+  return s.toLowerCase();
+}
+
+const imageByPath = new Map<string, any>();
+const imageByFile = new Map<string, any>();
+for (const [key, mod] of Object.entries(courseImageModules)) {
+  const meta = (mod as any).default ?? mod;
+  const canonical = normalizeKey(key.replace(/^.*\/assets\/images\//i, "/images/"));
+  imageByPath.set(canonical, meta);
+  const file = canonical.split("/").pop();
+  if (file) imageByFile.set(file.toLowerCase(), meta);
+}
+
+function resolveCourseImage(dbPath?: string | unknown) {
+  if (!dbPath) return null;
+  if (typeof dbPath === "object" && dbPath && (dbPath as any).src) return dbPath as any;
+  if (typeof dbPath !== "string") return null;
+
+  const candidates = new Set<string>();
+  candidates.add(normalizeKey(dbPath));
+  if (/^\/assets\/images\//i.test(dbPath)) {
+    candidates.add(normalizeKey(dbPath.replace(/^\/assets/i, "")));
+  }
+
+  const fileOnly = dbPath.split("/").pop();
+  if (fileOnly) {
+    const meta = imageByFile.get(fileOnly.toLowerCase());
+    if (meta) return meta;
+  }
+  for (const c of candidates) {
+    const meta = imageByPath.get(c);
+    if (meta) return meta;
+  }
+  return null;
+}
+
+// 3) Merge + resolve images server-side
+const metaByCourse = new Map(metaRows.map(m => [m.course_id, m]));
+const tagsByCourse = new Map<number, string[]>();
+for (const t of tagRows) {
+  const arr = tagsByCourse.get(t.course_id) ?? [];
+  arr.push(t.tag);
+  tagsByCourse.set(t.course_id, arr);
+}
+
+const allCourses = courseRows.map((c) => {
+  const meta = metaByCourse.get(c.id);
+  const imageMeta  = resolveCourseImage(c.image) || resolveCourseImage(meta?.hero_image);
+  const avatarMeta = resolveCourseImage(c.avatar);
+  return {
+    ...c,
+    rating: c.rating ?? 0,
+    featured: !!c.featured,
+    featured_order: c.featured_order ?? 0,
+    hero_image: meta?.hero_image || "",
+    tags: tagsByCourse.get(c.id) ?? [],
+    _imageMeta: imageMeta,
+    _avatarMeta: avatarMeta,
+  };
+});
+
+// 4) Filters + sort
+const levelOrder = ["beginner", "intermediate", "advanced"];
+const distinctLevels = [...new Set(allCourses.map(c => (c.level||"").toLowerCase()))]
+  .filter(Boolean).sort((a,b) => levelOrder.indexOf(a)-levelOrder.indexOf(b));
+const distinctTags = [...new Set(allCourses.flatMap(c => c.tags))].sort();
+
+const initialCourses = allCourses.slice().sort((a,b) => {
+  if (a.featured !== b.featured) return a.featured ? -1 : 1;
+  if (a.featured && b.featured) return (a.featured_order ?? 0) - (b.featured_order ?? 0);
+  return new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime();
+});
+
+const title = "Learnelectronics — Courses";
+const description = "Explore available courses.";
+---
+
+
+<CoursesLayout title={title} description={description} heroImage="/images/courses/hero-catalog.jpg">
+  <!-- Controls -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8" x-data="courseFilters()">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-semibold text-base-content">Browse Courses</h1>
+        <p class="opacity-70 text-sm md:text-base">Use quick tags or open the filter panel to refine results.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-2 text-sm opacity-80">
+          <span x-text="countVisible()"></span><span>results</span>
+        </div>
+        <button class="btn btn-primary gap-2" @click="openFilters()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path fill-rule="evenodd" d="M3.75 5.25a.75.75 0 01.75-.75h15a.75.75 0 01.53 1.28L14.25 11.56v5.19a.75.75 0 01-1.09.67l-3-1.5a.75.75 0 01-.41-.67v-3.69L3.22 5.78A.75.75 0 013.75 5.25z" clip-rule="evenodd" />
+          </svg>
+          Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Tag Strip -->
+    <div class="mt-6 flex flex-wrap gap-2">
+      <button class="badge badge-outline hover:badge-primary cursor-pointer"
+              :class="filters.tags.size===0 ? 'badge-primary text-primary-content' : ''"
+              @click="clearTags()">All</button>
+      {distinctTags.map(tag => (
+        <button class="badge badge-outline hover:badge-primary cursor-pointer"
+                data-tag={tag}
+                :class="filters.tags.has($el.dataset.tag) ? 'badge-primary text-primary-content' : ''"
+                @click="toggleTag($el.dataset.tag)">{tag}</button>
+      ))}
+    </div>
+  </section>
+
+  <!-- SSR GRID with <Image>. Alpine only toggles visibility on these cards -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+           x-data="courseFilters()"
+           x-init="mount()"
+           @filters-changed.window="applyAll()">
+    <div id="coursesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {initialCourses.map((c) => (
+        <a
+          href={`/courses/${c.slug}`}
+          class="card bg-base-100 shadow hover:shadow-lg transition h-full border border-base-200 overflow-hidden"
+          data-level={(c.level||'').toLowerCase()}
+          data-tags={(c.tags||[]).join("|")}
+          data-title={(c.title||'').toLowerCase()}
+          data-desc={(c.description||'').toLowerCase()}
+          data-instructor={(c.instructor||'').toLowerCase()}
+        >
+          <figure class="aspect-[16/9] overflow-hidden">
+            {c._imageMeta ? (
+              <Image src={c._imageMeta} alt={c.title} class="w-full h-full object-cover" sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw" />
+            ) : (
+              <div class="w-full h-full bg-base-200" />
+            )}
+          </figure>
+          <div class="card-body">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="card-title text-lg md:text-xl line-clamp-2">{c.title}</h3>
+              <span class="badge badge-primary">{(c.level||'').slice(0,1).toUpperCase()}{(c.level||'').slice(1)}</span>
+            </div>
+            <p class="text-sm opacity-80 line-clamp-2">{c.excerpt || c.description}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              {(c.tags||[]).map((t) => <span class="badge badge-outline">{t}</span>)}
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <!-- Empty state -->
+    <div class="mt-10 text-center hidden" id="emptyState">
+      <div class="inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-base-200">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 opacity-70">
+          <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm9.75-6a.75.75 0 01.75.75v4.5h3a.75.75 0 010 1.5h-3v3a.75.75 0 01-1.5 0v-3h-3a.75.75 0 010-1.5h3v-4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+        </svg>
+        <span class="font-medium">No courses match your filters.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter Modal hooked to the same global store -->
+  <dialog id="filterModal" class="modal" x-data="courseFilters()">
+    <div class="modal-box max-w-xl">
+      <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button></form>
+      <h3 class="text-lg font-semibold mb-4">Filters</h3>
+
+      <div class="form-control mb-4">
+        <label class="label"><span class="label-text">Search</span></label>
+        <input type="text" class="input input-bordered" placeholder="Title, description, instructor…" x-model.trim="search" @input="broadcast()" />
+      </div>
+
+      <div class="mb-4">
+        <p class="text-sm font-semibold mb-2">Level</p>
+        <div class="flex flex-wrap gap-2">
+          {distinctLevels.map(lv => (
+            <button type="button" class="btn btn-sm btn-outline"
+                    data-level={lv}
+                    :class="filters.levels.has($el.dataset.level) ? 'btn-primary text-primary-content' : ''"
+                    @click="toggleLevel($el.dataset.level)">{lv.charAt(0).toUpperCase()+lv.slice(1)}</button>
+          ))}
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <p class="text-sm font-semibold mb-2">Tags</p>
+        <div class="flex flex-wrap gap-2 max-h-56 overflow-auto pr-1">
+          {distinctTags.map(tag => (
+            <button type="button" class="badge badge-outline hover:badge-primary"
+                    data-tag={tag}
+                    :class="filters.tags.has($el.dataset.tag) ? 'badge-primary text-primary-content' : ''"
+                    @click="toggleTag($el.dataset.tag)">{tag}</button>
+          ))}
+        </div>
+      </div>
+
+      <div class="modal-action">
+        <button class="btn btn-ghost" @click="clearAll()">Clear</button>
+        <form method="dialog"><button class="btn btn-primary">Apply</button></form>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <script is:inline>
+    // Global store pattern so multiple x-data blocks share filters
+    window.__courseFilters = window.__courseFilters || {
+      filters: { levels: new Set(), tags: new Set() },
+      search: "",
+    };
+
+    function courseFilters() {
+      return {
+        filters: window.__courseFilters.filters,
+        search: window.__courseFilters.search,
+
+        // Quick actions
+        openFilters(){ document.getElementById('filterModal')?.showModal(); },
+        clearTags(){ this.filters.tags.clear(); this.broadcast(); },
+        clearAll(){ this.filters.tags.clear(); this.filters.levels.clear(); this.search = ""; this.broadcast(); },
+        toggleTag(t){ this.filters.tags.has(t) ? this.filters.tags.delete(t) : this.filters.tags.add(t); this.broadcast(); },
+        toggleLevel(lv){ this.filters.levels.has(lv) ? this.filters.levels.delete(lv) : this.filters.levels.add(lv); this.broadcast(); },
+
+        // Grid helpers
+        countVisible(){
+          const cards = document.querySelectorAll('#coursesGrid > a');
+          return Array.from(cards).filter(el => !el.classList.contains('hidden')).length;
+        },
+        broadcast(){
+          window.__courseFilters.search = this.search;
+          window.dispatchEvent(new CustomEvent('filters-changed'));
+        },
+        applyAll(){
+          const cards = document.querySelectorAll('#coursesGrid > a');
+          const q = (window.__courseFilters.search || '').toLowerCase().trim();
+          const levels = window.__courseFilters.filters.levels;
+          const tags   = window.__courseFilters.filters.tags;
+
+          let visible = 0;
+          cards.forEach((el) => {
+            const elLevel = (el.dataset.level || '').toLowerCase();
+            const elTags  = (el.dataset.tags || '').split('|').filter(Boolean);
+            const hay = (el.dataset.title + ' ' + el.dataset.desc + ' ' + el.dataset.instructor + ' ' + el.dataset.tags).toLowerCase();
+
+            const levelOk = levels.size === 0 || levels.has(elLevel);
+            const tagOk = tags.size === 0 || elTags.some(t => tags.has(t));
+            const searchOk = !q || hay.includes(q);
+
+            const show = levelOk && tagOk && searchOk;
+            el.classList.toggle('hidden', !show);
+            if (show) visible++;
+          });
+
+          const empty = document.getElementById('emptyState');
+          if (empty) empty.classList.toggle('hidden', visible !== 0);
+        },
+        mount(){
+          // first apply once
+          this.applyAll();
+          // listen for external changes
+          window.addEventListener('filters-changed', () => this.applyAll());
+        },
+      }
+    }
+  </script>
+</CoursesLayout>

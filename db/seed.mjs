@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 
-import { db, Admins, Users, Courses, Engagement, Videos, PostStats, CourseMeta, CourseOutcomes, CourseModules, CourseVideos, ModuleVideos, PostVideos, eq } from 'astro:db';
+import { db, Admins, Users, Courses, Engagement, Videos, PostStats, CourseMeta, CourseOutcomes, CourseModules, CourseVideos, ModuleVideos, PostVideos, CourseTags, eq } from 'astro:db';
 import { faker } from '@faker-js/faker';
 
 
@@ -200,6 +200,32 @@ if (existingCourses.length === 0) {
 // Build lookup (slug -> id)
 const allCourses = await db.select().from(Courses);
 const CID = Object.fromEntries(allCourses.map(c => [c.slug, c.id]));
+
+// --- CourseTags Seeding ---
+console.log("Seeding course tags…");
+await db.delete(CourseTags); // idempotent dev seeding
+
+// Adjust/extend as you like — keep tags short & filter-friendly
+const TAGS = {
+  'circuit-theory': ['Analog'],
+  'digital-electronics': ['Digital', 'FSM'],
+  'analog-electronics': ['Analog', 'OpAmp'],
+  'rf-and-microwave-electronics': ['Analog', 'RF', 'Microwave'],
+};
+
+const tagRows = Object.entries(TAGS).flatMap(([slug, tags]) =>
+  tags.map((tag) => ({ course_id: CID[slug], tag }))
+);
+
+// Ignore if a course slug wasn’t found (e.g., during partial dev seeds)
+const filteredTagRows = tagRows.filter(r => Number.isFinite(r.course_id));
+
+if (filteredTagRows.length) {
+  await db.insert(CourseTags).values(filteredTagRows);
+  console.log(`Inserted ${filteredTagRows.length} course tags.`);
+} else {
+  console.log('No course tags inserted (no matching courses).');
+}
 
 // --- CourseMeta Seeding ---
 console.log("Seeding course meta…");

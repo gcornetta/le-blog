@@ -1,0 +1,140 @@
+---
+/**
+ * Dedicated layout for Courses pages, using <Image> for the hero.
+ * It resolves DB-ish paths to ImageMetadata via eager glob.
+ * 
+ * Props:
+ * - title: string
+ * - description?: string
+ * - heroImage?: string | ImageMetadata (DB-ish string like "/images/courses/hero.jpg" or imported)
+ * - hideHero?: boolean
+ */
+
+import Header from '../components/content/Header.astro';  
+import Footer from '../components/content/Footer.astro'; 
+import UpButton from '../components/ui/UpButton.astro';
+
+import { Image } from "astro:assets";
+
+import '../styles/global.css';  
+
+interface Props {
+  title: string;
+  description?: string;
+  heroImage?: any;
+}
+
+const { title, description = "", heroImage = ""} = Astro.props as Props;
+
+// Eager import all site images under /src/assets/images
+const imageModules = import.meta.glob(
+  "../assets/images/courses/**/*.{png,jpg,jpeg,webp,avif}",
+  { eager: true }
+);
+
+// Normalization + index maps
+function normalizeKey(p: string) {
+  let s = p.replace(/\\/g, "/");
+  s = s.replace(/^.*\/assets\/images\//i, "/images/");
+  s = s.replace(/^images\//i, "/images/");
+  if (!s.startsWith("/images/")) s = s.startsWith("/") ? s : `/images/${s}`;
+  return s.toLowerCase();
+}
+
+const imageByPath = new Map<string, any>();
+const imageByFile = new Map<string, any>();
+for (const [key, mod] of Object.entries(imageModules)) {
+  const meta = (mod as any).default ?? mod;
+  const canonical = normalizeKey(key.replace(/^.*\/assets\/images\//i, "/images/"));
+  imageByPath.set(canonical, meta);
+  const file = canonical.split("/").pop();
+  if (file) imageByFile.set(file.toLowerCase(), meta);
+}
+
+function resolveImage(input?: any) {
+  if (!input) return null;
+  if (typeof input === "object" && input.src) return input;
+  if (typeof input !== "string") return null;
+
+  const candidates = new Set<string>();
+  candidates.add(normalizeKey(input));
+  if (/^\/assets\/images\//i.test(input)) {
+    candidates.add(normalizeKey(input.replace(/^\/assets/i, "")));
+  }
+
+  const file = input.split("/").pop();
+  if (file) {
+    const meta = imageByFile.get(file.toLowerCase());
+    if (meta) return meta;
+  }
+  for (const c of candidates) {
+    const meta = imageByPath.get(c);
+    if (meta) return meta;
+  }
+  return null;
+}
+
+const heroMeta = resolveImage(heroImage);
+
+// Brand-styling helper: Learn + e + lectronics → wrap the “e”
+function styleBrandInTitle(t) {
+  if (typeof t !== 'string') return null
+  // Case-sensitive; add /i for case-insensitive
+  const html = t.replace(
+    /Learn(e)lectronics/g,
+    'Learn<span class="inline-block mr-[0.1rem] ml-[0.1rem] text-red-500" style="transform: rotate(-15deg);">e</span>lectronics'
+  )
+  return html === t ? null : html
+}
+
+const styledTitleHTML = styleBrandInTitle(title)
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+    <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:type" content="website" />
+    <style>[x-cloak]{display:none!important}</style>
+    </head>
+  <body class="min-h-dvh bg-base-100 text-base-content">
+    <Header /> 
+    {heroMeta && (
+    <header class="relative overflow-hidden">
+        {/* Background layer: keep it in the same stacking context, not negative */}
+        <div class="absolute inset-0 z-0 pointer-events-none">
+        <div class="absolute inset-0 bg-gradient-to-b from-primary/10 via-base-100 to-base-100" />
+        <div class="absolute inset-0 opacity-[0.45]">
+            <Image src={heroMeta} alt="" class="w-full h-full object-cover" sizes="100vw" />
+            <div class="absolute inset-0 bg-black/40"></div> <!-- dark overlay -->
+        </div>
+        <div class="absolute inset-0 pointer-events-none [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]" />
+        </div>
+
+        {/* Foreground content sits above */}
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+            {styledTitleHTML ? (
+              <h1 class="text-3xl md:text-4xl font-semibold tracking-tight" set:html={styledTitleHTML} />
+            ) : (
+              <h1 class="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h1>
+            )}
+            {description && <p class="mt-2 max-w-2xl opacity-80">{description}</p>}
+            </div>
+        </div>
+        </div>
+    </header>
+    )}
+    <main id="main" class="pb-16">
+        <slot />
+    </main>
+    <Footer />
+    <UpButton /> 
+  </body>
+</html>

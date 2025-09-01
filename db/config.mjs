@@ -182,6 +182,19 @@ const CourseModules = defineTable({
   }),
 });
 
+// Course tags
+const CourseTags = defineTable({
+  name: 'course_tags',
+  columns: {
+    id: column.number({ primaryKey: true }),
+    course_id: column.number({ references: () => Courses.columns.id }),
+    tag: column.text(), // e.g. 'RF', 'Analog', 'Beginner-friendly'
+  },
+  relations: () => ({
+    course: relations(Courses),
+  }),
+});
+
 // Latest videos list (carousel entries)
 const Videos = defineTable({
   name: 'videos',
@@ -277,5 +290,6 @@ export default defineDb({
     CourseVideos,
     ModuleVideos,
     PostVideos,
+    CourseTags,
   },
 });
